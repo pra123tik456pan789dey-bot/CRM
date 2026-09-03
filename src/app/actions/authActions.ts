@@ -96,3 +96,49 @@ export async function registerCompanyAction(formData: FormData) {
     };
   }
 }
+
+export async function createEmployeeUserAction(data: {
+  name: string;
+  email: string;
+  password: string;
+  role: "MANAGER" | "SALESEXECUTIVE" | "SUPERADMIN";
+  phone?: string;
+}) {
+  try {
+    const { name, email, password, role, phone } = data;
+    if (!name || !email || !password) {
+      return { success: false, error: "Name, email, and password are required." };
+    }
+
+    const existingUser = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() },
+    });
+
+    if (existingUser) {
+      return { success: false, error: "A user with this email already exists." };
+    }
+
+    const company = await prisma.company.findFirst();
+    if (!company) {
+      return { success: false, error: "No company account found. Please register a company first." };
+    }
+
+    const password_hash = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        company_id: company.id,
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        password_hash,
+        role: role || "SALESEXECUTIVE",
+        phone: phone || undefined,
+      },
+    });
+
+    return { success: true, message: `Account created for ${user.name} (${user.role})!`, user };
+  } catch (error: any) {
+    console.error("Error in createEmployeeUserAction:", error);
+    return { success: false, error: error.message || "Failed to create user account." };
+  }
+}

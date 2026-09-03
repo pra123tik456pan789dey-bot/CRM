@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Shield, Building, Palette, Users, Download, Database, MessageSquare, PhoneCall, RefreshCw, Plus, CheckCircle2, Server } from "lucide-react";
 import { createManualDatabaseBackup } from "@/app/actions/backupActions";
 import { registerWhatsAppAccount, toggleAccountStatus } from "@/app/actions/multiWhatsAppActions";
+import { createEmployeeUserAction } from "@/app/actions/authActions";
 
 export default function SuperAdminView({
   company,
@@ -31,6 +32,39 @@ export default function SuperAdminView({
   const [waPhone, setWaPhone] = useState("");
   const [assignedUser, setAssignedUser] = useState("");
   const [sessionName, setSessionName] = useState("");
+
+  // Create Employee State
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"MANAGER" | "SALESEXECUTIVE" | "SUPERADMIN">("SALESEXECUTIVE");
+  const [newUserPhone, setNewUserPhone] = useState("");
+  const [userMsg, setUserMsg] = useState<string | null>(null);
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserName || !newUserEmail || !newUserPassword) return;
+    const res = await createEmployeeUserAction({
+      name: newUserName,
+      email: newUserEmail,
+      password: newUserPassword,
+      role: newUserRole,
+      phone: newUserPhone
+    });
+
+    if (res.success) {
+      setUserMsg(res.message);
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserPhone("");
+      setShowAddUserModal(false);
+      setTimeout(() => setUserMsg(null), 4000);
+    } else {
+      setUserMsg(`Error: ${res.error}`);
+    }
+  };
 
   const handleSaveBranding = (e: React.FormEvent) => {
     e.preventDefault();
@@ -366,18 +400,36 @@ export default function SuperAdminView({
             </div>
           </div>
 
-          {/* User count list */}
+          {/* User count list with Add User button */}
           <div>
-            <h4 className="font-semibold text-xs text-gray-500 uppercase mb-3">Registered Team Users ({users.length})</h4>
+            <div className="flex justify-between items-center mb-3">
+              <h4 className="font-semibold text-xs text-gray-500 uppercase">Registered Staff & Team ({users.length})</h4>
+              <button
+                onClick={() => setShowAddUserModal(true)}
+                className="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-1"
+              >
+                <Plus className="w-3.5 h-3.5" /> Add Staff / Manager ID
+              </button>
+            </div>
+
+            {userMsg && (
+              <div className="mb-3 p-2.5 bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs rounded-lg font-medium">
+                {userMsg}
+              </div>
+            )}
+
             <div className="space-y-2 max-h-48 overflow-y-auto">
               {users.map((u) => (
-                <div key={u.id} className="p-2.5 bg-gray-50 rounded-lg flex justify-between items-center text-xs">
+                <div key={u.id} className="p-2.5 bg-gray-50 rounded-lg flex justify-between items-center text-xs border border-gray-100">
                   <div>
                     <span className="font-bold text-gray-900">{u.name}</span>
                     <span className="block text-gray-400">{u.email}</span>
                   </div>
-                  <span className="font-semibold px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded">
-                    {u.role}
+                  <span className={`font-bold px-2 py-0.5 rounded ${
+                    u.role === "SUPERADMIN" ? "bg-purple-100 text-purple-800" :
+                    u.role === "MANAGER" ? "bg-indigo-100 text-indigo-800" : "bg-emerald-100 text-emerald-800"
+                  }`}>
+                    {u.role === "SUPERADMIN" ? "Super Admin" : u.role === "MANAGER" ? "Manager / HR" : "Sales Executive"}
                   </span>
                 </div>
               ))}
@@ -385,7 +437,99 @@ export default function SuperAdminView({
           </div>
         </div>
       </div>
+
+      {/* Create Staff Account Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-bold text-gray-900 text-base">Create Employee / Manager ID & Password</h3>
+              <button onClick={() => setShowAddUserModal(false)} className="text-gray-400 hover:text-gray-700 font-bold">×</button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Priya Sharma"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Work Email (Login ID) *</label>
+                <input
+                  type="email"
+                  placeholder="priya@company.com"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Login Password *</label>
+                <input
+                  type="password"
+                  placeholder="Set password (e.g. Priya@123)"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Role / Designation *</label>
+                <select
+                  value={newUserRole}
+                  onChange={(e: any) => setNewUserRole(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-semibold"
+                >
+                  <option value="SALESEXECUTIVE">Sales Executive (Employee)</option>
+                  <option value="MANAGER">Manager / HR</option>
+                  <option value="SUPERADMIN">Super Admin / Business Owner</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Mobile Phone (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="+919876543210"
+                  value={newUserPhone}
+                  onChange={(e) => setNewUserPhone(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddUserModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-md shadow-indigo-600/30"
+                >
+                  Create Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
   );
 }
 
