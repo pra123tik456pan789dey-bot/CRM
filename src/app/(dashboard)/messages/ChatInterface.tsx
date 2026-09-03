@@ -85,7 +85,7 @@ export default function ChatInterface({ initialLeads }: { initialLeads: any[] })
   );
 
   return (
-    <div className="h-[calc(100vh-8.5rem)] flex rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-xl">
+    <div className="h-full w-full flex rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-xl min-h-0">
       {/* 🟢 WhatsApp Chat List View (Full Width on Mobile when chat not active) */}
       <div
         className={`w-full md:w-80 lg:w-96 border-r border-gray-200 flex flex-col bg-white flex-shrink-0 ${
@@ -243,19 +243,19 @@ export default function ChatInterface({ initialLeads }: { initialLeads: any[] })
             </div>
 
             {/* Bottom WhatsApp Message Bar */}
-            <div className="bg-[#f0f2f5] p-2.5 sm:p-3 border-t border-gray-200">
+            <div className="bg-[#f0f2f5] p-2 sm:p-3 border-t border-gray-200 flex-shrink-0 z-20 shadow-md">
               <form onSubmit={handleSend} className="flex items-center gap-2">
                 <input
                   type="text"
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder="Type a message..."
-                  className="flex-1 bg-white border border-gray-200 rounded-full px-4 py-2 text-xs sm:text-sm text-gray-800 outline-none focus:ring-2 focus:ring-[#075e54]"
+                  className="flex-1 bg-white border border-gray-300 rounded-full px-4 py-2.5 text-xs sm:text-sm text-gray-900 outline-none focus:ring-2 focus:ring-[#075e54] shadow-sm"
                 />
                 <button
                   type="submit"
                   disabled={!replyText.trim() || isSending}
-                  className="w-9 h-9 bg-[#128c7e] text-white rounded-full flex items-center justify-center hover:bg-[#075e54] disabled:opacity-50 transition-colors shadow-md flex-shrink-0"
+                  className="w-10 h-10 bg-[#128c7e] text-white rounded-full flex items-center justify-center hover:bg-[#075e54] disabled:opacity-50 transition-colors shadow-md flex-shrink-0"
                 >
                   <Send className="w-4 h-4" />
                 </button>

@@ -19,13 +19,13 @@ export default async function MessagesPage() {
   });
 
   return (
-    <div className="h-full flex flex-col">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">WhatsApp Chats</h1>
-        <p className="text-gray-500 mt-1">Manage all your WhatsApp conversations in one place.</p>
+    <div className="h-full flex flex-col min-h-0">
+      <div className="hidden md:block mb-4">
+        <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">WhatsApp Chats</h1>
+        <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Manage all your WhatsApp conversations in one place.</p>
       </div>
       
-      <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-200 flex overflow-hidden">
+      <div className="flex-1 bg-white rounded-2xl shadow-sm border border-gray-200 flex overflow-hidden min-h-0">
         <ChatInterface initialLeads={leadsWithMessages} />
       </div>
     </div>
