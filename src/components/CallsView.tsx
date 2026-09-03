@@ -24,20 +24,20 @@ export default function CallsView({ logs, leads }: { logs: any[]; leads: any[] }
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cloud Telephony & Call Logs</h1>
-          <p className="text-sm text-gray-500 mt-1">Review call duration, status, and listen to recorded calls.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Cloud Telephony & Call Logs</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Review call duration, status, and listen to recorded calls.</p>
         </div>
 
         {/* Quick Dialer Bar */}
-        <div className="flex items-center gap-3 bg-white p-2 border border-gray-200 rounded-xl shadow-sm">
+        <div className="flex items-center gap-2 bg-white p-2 border border-gray-200 rounded-xl shadow-sm">
           <select
             value={selectedLeadId}
             onChange={(e) => setSelectedLeadId(e.target.value)}
-            className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white"
+            className="w-full sm:w-auto px-2.5 py-1.5 border border-gray-300 rounded-lg text-xs text-gray-800 bg-white"
           >
             {leads.map((l) => (
               <option key={l.id} value={l.id}>
@@ -49,22 +49,22 @@ export default function CallsView({ logs, leads }: { logs: any[]; leads: any[] }
           <button
             onClick={handleDial}
             disabled={isDialing}
-            className="flex items-center gap-2 px-4 py-1.5 bg-emerald-600 text-white text-sm font-semibold rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors flex-shrink-0"
           >
-            <PhoneCall className="w-4 h-4" /> {isDialing ? "Dialing..." : "Click-to-Call"}
+            <PhoneCall className="w-3.5 h-3.5" /> {isDialing ? "Dialing..." : "Call"}
           </button>
         </div>
       </div>
 
       {dialResult && (
-        <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-lg flex justify-between items-center">
+        <div className="p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex justify-between items-center">
           <span>{dialResult}</span>
-          <button onClick={() => setDialResult(null)} className="font-bold">×</button>
+          <button onClick={() => setDialResult(null)} className="font-bold text-sm ml-2">×</button>
         </div>
       )}
 
       {/* Call Logs Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex-1">
+      <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-x-auto flex-1">
         <table className="w-full text-left border-collapse text-sm">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">

@@ -55,19 +55,19 @@ export default function AdvancedDashboard({ stats }: { stats: any }) {
   }));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Top 4 Key Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
-        <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
+        <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Total Leads</p>
-            <h3 className="text-2xl font-bold text-gray-900 mt-1">{stats.totalLeads || 0}</h3>
-            <p className="text-xs text-emerald-600 font-semibold mt-1 flex items-center gap-1">
+            <p className="text-[10px] sm:text-xs font-bold text-gray-400 uppercase tracking-wider">Total Leads</p>
+            <h3 className="text-xl sm:text-2xl font-black text-gray-900 mt-1">{stats.totalLeads || 0}</h3>
+            <p className="text-[11px] text-emerald-600 font-semibold mt-1 flex items-center gap-1">
               <ArrowUpRight className="w-3.5 h-3.5" /> +12% this month
             </p>
           </div>
-          <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
-            <Users className="w-6 h-6" />
+          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+            <Users className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
         </div>
 

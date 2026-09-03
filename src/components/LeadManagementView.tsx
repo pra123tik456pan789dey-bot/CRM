@@ -108,72 +108,72 @@ export default function LeadManagementView({
   });
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full flex flex-col space-y-4 sm:space-y-6">
       {/* Top Header */}
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Lead & Deal Management</h1>
-          <p className="text-sm text-gray-500 mt-1">Track pipeline stages, search leads, and import bulk contacts.</p>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Lead & Deal Management</h1>
+          <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Track pipeline stages, search leads, and import bulk contacts.</p>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           {/* View toggle */}
-          <div className="bg-gray-100 p-1 rounded-lg flex gap-1">
+          <div className="bg-gray-100 p-1 rounded-xl flex gap-1">
             <button
               onClick={() => setViewMode("board")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 viewMode === "board" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              <Kanban className="w-3.5 h-3.5" /> Kanban Board
+              <Kanban className="w-3.5 h-3.5" /> Board
             </button>
 
             <button
               onClick={() => setViewMode("table")}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold transition-all ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 viewMode === "table" ? "bg-white text-indigo-600 shadow-sm" : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              <TableIcon className="w-3.5 h-3.5" /> Contacts Table
+              <TableIcon className="w-3.5 h-3.5" /> Table
             </button>
           </div>
 
           <button
             onClick={() => setShowCsvModal(true)}
-            className="flex items-center gap-2 px-3.5 py-2 border border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="flex items-center gap-1.5 px-3 py-2 border border-gray-300 rounded-xl text-xs font-bold text-gray-700 hover:bg-gray-50"
           >
-            <Upload className="w-4 h-4 text-gray-500" /> CSV Import
+            <Upload className="w-3.5 h-3.5 text-gray-500" /> Import
           </button>
 
           <button
             onClick={() => setShowAddModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold hover:bg-indigo-700 shadow-sm"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-sm"
           >
-            <Plus className="w-4 h-4" /> Add Lead
+            <Plus className="w-3.5 h-3.5" /> Add Lead
           </button>
         </div>
       </div>
 
       {/* Filter & Search Bar */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm mb-6 flex flex-wrap gap-4 items-center justify-between">
-        <div className="flex-1 min-w-[240px] relative">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+        <div className="flex-1 relative">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
           <input
             type="text"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search leads by name, email, company or phone..."
-            className="w-full pl-9 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            placeholder="Search leads by name, email, company..."
+            className="w-full pl-9 pr-4 py-2 text-xs sm:text-sm border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
-            <Filter className="w-4 h-4" /> Status:
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 font-medium flex-1 sm:flex-none">
+            <Filter className="w-3.5 h-3.5" /> Status:
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white"
+              className="w-full sm:w-auto px-2.5 py-1.5 border border-gray-300 rounded-xl text-xs text-gray-800 bg-white"
             >
               <option value="ALL">All Statuses</option>
               <option value="NEW">New</option>
@@ -185,12 +185,12 @@ export default function LeadManagementView({
             </select>
           </div>
 
-          <div className="flex items-center gap-2 text-sm text-gray-500 font-medium">
+          <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 font-medium flex-1 sm:flex-none">
             Source:
             <select
               value={sourceFilter}
               onChange={(e) => setSourceFilter(e.target.value)}
-              className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm text-gray-800 bg-white"
+              className="w-full sm:w-auto px-2.5 py-1.5 border border-gray-300 rounded-xl text-xs text-gray-800 bg-white"
             >
               <option value="ALL">All Sources</option>
               <option value="WEBSITE">Website</option>
@@ -205,13 +205,15 @@ export default function LeadManagementView({
 
       {/* Main View Display */}
       {viewMode === "board" ? (
-        <KanbanDealsBoard
-          initialPipeline={pipelineData.pipeline}
-          initialDeals={pipelineData.deals}
-          leads={filteredLeads}
-        />
+        <div className="overflow-x-auto pb-4">
+          <KanbanDealsBoard
+            initialPipeline={pipelineData.pipeline}
+            initialDeals={pipelineData.deals}
+            leads={filteredLeads}
+          />
+        </div>
       ) : (
-        <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm flex-1">
+        <div className="bg-white border border-gray-200 rounded-2xl overflow-x-auto shadow-sm flex-1">
           <table className="w-full text-left text-sm text-gray-600">
             <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
               <tr>
