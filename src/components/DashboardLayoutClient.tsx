@@ -33,8 +33,8 @@ export default function DashboardLayoutClient({
 }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const currentUser = session?.user || { name: "Amit Sharma", email: "admin@crm.com", role: "SUPERADMIN" };
-  const userRole = currentUser.role || "SUPERADMIN";
+  const currentUser = session?.user || { name: "User", email: "user@crm.com", role: "SALESEXECUTIVE" };
+  const userRole = currentUser.role || "SALESEXECUTIVE";
 
   const getInitials = (name: string) => {
     if (!name) return "US";

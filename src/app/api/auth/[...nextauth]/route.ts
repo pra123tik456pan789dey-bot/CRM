@@ -65,7 +65,7 @@ export const authOptions: NextAuthOptions = {
         // @ts-ignore
         session.user.id = token.sub;
         // @ts-ignore
-        session.user.role = token.role || "SUPERADMIN";
+        session.user.role = token.role || "SALESEXECUTIVE";
         // @ts-ignore
         session.user.name = token.name || session.user.name;
       }
