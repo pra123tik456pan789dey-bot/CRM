@@ -60,7 +60,7 @@ export const authOptions: NextAuthOptions = {
       return session;
     }
   },
-  secret: process.env.NEXTAUTH_SECRET || "fallback_secret_for_local_dev_123"
+  secret: process.env.NEXTAUTH_SECRET || "your-super-secret-key-123"
 };
 
 const handler = NextAuth(authOptions);
