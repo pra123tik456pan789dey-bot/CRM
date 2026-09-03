@@ -23,6 +23,7 @@ import {
   Smartphone
 } from "lucide-react";
 import { signOut } from "next-auth/react";
+import { createEmployeeUserAction } from "@/app/actions/authActions";
 
 export default function DashboardLayoutClient({
   children,
@@ -33,6 +34,40 @@ export default function DashboardLayoutClient({
 }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  // Global Add Staff Account Modal State
+  const [showGlobalAddUserModal, setShowGlobalAddUserModal] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"MANAGER" | "SALESEXECUTIVE" | "SUPERADMIN">("SALESEXECUTIVE");
+  const [newUserPhone, setNewUserPhone] = useState("");
+  const [userMsg, setUserMsg] = useState<string | null>(null);
+
+  const handleGlobalCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserName || !newUserEmail || !newUserPassword) return;
+    const res = await createEmployeeUserAction({
+      name: newUserName,
+      email: newUserEmail,
+      password: newUserPassword,
+      role: newUserRole,
+      phone: newUserPhone
+    });
+
+    if (res.success) {
+      setUserMsg(res.message);
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserPhone("");
+      setShowGlobalAddUserModal(false);
+      setTimeout(() => setUserMsg(null), 4000);
+    } else {
+      setUserMsg(`Error: ${res.error}`);
+    }
+  };
+
   const currentUser = session?.user || { name: "User", email: "user@crm.com", role: "SALESEXECUTIVE" };
   const userRole = currentUser.role || "SALESEXECUTIVE";
 
@@ -301,6 +336,16 @@ export default function DashboardLayoutClient({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
+            {userRole === "SUPERADMIN" && (
+              <button
+                onClick={() => setShowGlobalAddUserModal(true)}
+                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-xs font-bold hover:shadow-lg hover:shadow-indigo-500/20 transition-all flex items-center gap-1.5 shadow-md shadow-indigo-600/30"
+              >
+                <Users className="w-4 h-4" />
+                <span>+ Create Staff ID</span>
+              </button>
+            )}
+
             <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-xl relative">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
@@ -319,10 +364,107 @@ export default function DashboardLayoutClient({
           </div>
         </header>
 
+        {userMsg && (
+          <div className="mx-4 sm:mx-8 mt-3 p-3 bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs font-bold rounded-xl flex justify-between items-center shadow-sm">
+            <span>✅ {userMsg}</span>
+            <button onClick={() => setUserMsg(null)} className="font-extrabold text-sm ml-2">×</button>
+          </div>
+        )}
+
         {/* Page Main Content Container with Mobile Bottom Padding */}
         <div className="flex-1 overflow-auto p-3 sm:p-6 lg:p-8 pb-20 md:pb-8">
           {children}
         </div>
+
+        {/* Global Create Staff Account Modal */}
+        {showGlobalAddUserModal && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+              <div className="flex justify-between items-center border-b pb-3">
+                <h3 className="font-bold text-gray-900 text-base">Create Staff / Manager ID & Password</h3>
+                <button onClick={() => setShowGlobalAddUserModal(false)} className="text-gray-400 hover:text-gray-700 font-bold">×</button>
+              </div>
+
+              <form onSubmit={handleGlobalCreateUser} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Full Name *</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Priya Sharma"
+                    value={newUserName}
+                    onChange={(e) => setNewUserName(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Work Email (Login ID) *</label>
+                  <input
+                    type="email"
+                    placeholder="priya@company.com"
+                    value={newUserEmail}
+                    onChange={(e) => setNewUserEmail(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Login Password *</label>
+                  <input
+                    type="password"
+                    placeholder="Set password (e.g. Priya@123)"
+                    value={newUserPassword}
+                    onChange={(e) => setNewUserPassword(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Role / Designation *</label>
+                  <select
+                    value={newUserRole}
+                    onChange={(e: any) => setNewUserRole(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-semibold outline-none focus:ring-2 focus:ring-indigo-500"
+                  >
+                    <option value="SALESEXECUTIVE">Sales Executive (Employee)</option>
+                    <option value="MANAGER">Manager / HR</option>
+                    <option value="SUPERADMIN">Super Admin / Business Owner</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">Mobile Phone (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="+919876543210"
+                    value={newUserPhone}
+                    onChange={(e) => setNewUserPhone(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowGlobalAddUserModal(false)}
+                    className="px-4 py-2 border border-gray-300 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-4 py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-xs font-bold hover:shadow-lg transition-all"
+                  >
+                    Create Account
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* 📱 Mobile Native Bottom App Navigation Bar */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-gray-200 z-40 flex items-center justify-around px-2 shadow-lg">
