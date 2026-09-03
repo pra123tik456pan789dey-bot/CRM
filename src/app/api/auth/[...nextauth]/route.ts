@@ -16,21 +16,33 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email.toLowerCase().trim() }
-        });
+        try {
+          const emailInput = credentials.email.toLowerCase().trim();
+          const user = await prisma.user.findUnique({
+            where: { email: emailInput }
+          });
 
-        if (!user) return null;
+          if (!user) {
+            console.log("[NextAuth] User not found:", emailInput);
+            return null;
+          }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password_hash);
-        if (!isPasswordValid) return null;
+          const isPasswordValid = await bcrypt.compare(credentials.password, user.password_hash);
+          if (!isPasswordValid) {
+            console.log("[NextAuth] Invalid password for user:", emailInput);
+            return null;
+          }
 
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role
-        };
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role
+          };
+        } catch (err) {
+          console.error("[NextAuth] Authorize DB Error:", err);
+          return null;
+        }
       }
     })
   ],
