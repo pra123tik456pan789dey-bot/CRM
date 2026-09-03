@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { MessageSquare, Phone, Key, Shield, User, Building, Save, CheckCircle2 } from "lucide-react";
+import { MessageSquare, Phone, Key, Shield, User, Building, Save, CheckCircle2, Plus } from "lucide-react";
+import { createEmployeeUserAction } from "@/app/actions/authActions";
 
 export default function SettingsView({ users, company }: { users: any[]; company: any }) {
   const [waToken, setWaToken] = useState("EAAG123456789SAMPLETOKEN");
@@ -13,6 +14,39 @@ export default function SettingsView({ users, company }: { users: any[]; company
   const [twilioPhone, setTwilioPhone] = useState("+919876543210");
 
   const [savedNotice, setSavedNotice] = useState(false);
+
+  // Add Staff Account Modal State
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [newUserName, setNewUserName] = useState("");
+  const [newUserEmail, setNewUserEmail] = useState("");
+  const [newUserPassword, setNewUserPassword] = useState("");
+  const [newUserRole, setNewUserRole] = useState<"MANAGER" | "SALESEXECUTIVE" | "SUPERADMIN">("SALESEXECUTIVE");
+  const [newUserPhone, setNewUserPhone] = useState("");
+  const [userMsg, setUserMsg] = useState<string | null>(null);
+
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newUserName || !newUserEmail || !newUserPassword) return;
+    const res = await createEmployeeUserAction({
+      name: newUserName,
+      email: newUserEmail,
+      password: newUserPassword,
+      role: newUserRole,
+      phone: newUserPhone
+    });
+
+    if (res.success) {
+      setUserMsg(res.message);
+      setNewUserName("");
+      setNewUserEmail("");
+      setNewUserPassword("");
+      setNewUserPhone("");
+      setShowAddUserModal(false);
+      setTimeout(() => setUserMsg(null), 4000);
+    } else {
+      setUserMsg(`Error: ${res.error}`);
+    }
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -153,45 +187,147 @@ export default function SettingsView({ users, company }: { users: any[]; company
       </div>
 
       {/* User Roles & Permissions Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
-        <div className="flex justify-between items-center mb-4">
+      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-3 border-b pb-4">
           <div>
             <h3 className="font-bold text-gray-900 text-base">Team Members & Role-Based Permissions (RBAC)</h3>
-            <p className="text-xs text-gray-500">Super Admin, Manager, Sales Executive, and Read-only Viewer roles.</p>
+            <p className="text-xs text-gray-500">Super Admin, Manager / HR, and Sales Executive roles.</p>
           </div>
-          <span className="text-xs font-semibold px-3 py-1 bg-indigo-50 text-indigo-700 rounded-lg">
-            Tenant: {company?.name || "Apex Global Technologies"}
-          </span>
+
+          <button
+            onClick={() => setShowAddUserModal(true)}
+            className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 transition-colors flex items-center gap-1.5 shadow-md shadow-indigo-600/30"
+          >
+            <Plus className="w-4 h-4" /> + Add Staff / Manager ID
+          </button>
         </div>
 
-        <table className="w-full text-left text-sm">
-          <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase border-y border-gray-200">
-            <tr>
-              <th className="p-3">User Name</th>
-              <th className="p-3">Email Address</th>
-              <th className="p-3">Assigned Role</th>
-              <th className="p-3">Status</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {users.map((u) => (
-              <tr key={u.id}>
-                <td className="p-3 font-semibold text-gray-900">{u.name}</td>
-                <td className="p-3 text-gray-600">{u.email}</td>
-                <td className="p-3">
-                  <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-                    u.role === "SUPERADMIN" ? "bg-purple-100 text-purple-800" :
-                    u.role === "MANAGER" ? "bg-indigo-100 text-indigo-800" : "bg-blue-100 text-blue-800"
-                  }`}>
-                    {u.role}
-                  </span>
-                </td>
-                <td className="p-3 text-xs font-semibold text-emerald-600">Active</td>
+        {userMsg && (
+          <div className="p-3 bg-indigo-50 border border-indigo-200 text-indigo-900 text-xs rounded-xl font-medium">
+            {userMsg}
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-gray-50 text-xs font-semibold text-gray-500 uppercase border-y border-gray-200">
+              <tr>
+                <th className="p-3">User Name</th>
+                <th className="p-3">Email Address</th>
+                <th className="p-3">Assigned Role</th>
+                <th className="p-3">Status</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {users.map((u) => (
+                <tr key={u.id}>
+                  <td className="p-3 font-semibold text-gray-900">{u.name}</td>
+                  <td className="p-3 text-gray-600">{u.email}</td>
+                  <td className="p-3">
+                    <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
+                      u.role === "SUPERADMIN" ? "bg-purple-100 text-purple-800" :
+                      u.role === "MANAGER" ? "bg-indigo-100 text-indigo-800" : "bg-emerald-100 text-emerald-800"
+                    }`}>
+                      {u.role === "SUPERADMIN" ? "Super Admin" : u.role === "MANAGER" ? "Manager / HR" : "Sales Executive"}
+                    </span>
+                  </td>
+                  <td className="p-3 text-xs font-semibold text-emerald-600">Active</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
+
+      {/* Create Staff Account Modal */}
+      {showAddUserModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="font-bold text-gray-900 text-base">Create Employee / Manager ID & Password</h3>
+              <button onClick={() => setShowAddUserModal(false)} className="text-gray-400 hover:text-gray-700 font-bold">×</button>
+            </div>
+
+            <form onSubmit={handleCreateUser} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Priya Sharma"
+                  value={newUserName}
+                  onChange={(e) => setNewUserName(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Work Email (Login ID) *</label>
+                <input
+                  type="email"
+                  placeholder="priya@company.com"
+                  value={newUserEmail}
+                  onChange={(e) => setNewUserEmail(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Login Password *</label>
+                <input
+                  type="password"
+                  placeholder="Set password (e.g. Priya@123)"
+                  value={newUserPassword}
+                  onChange={(e) => setNewUserPassword(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Role / Designation *</label>
+                <select
+                  value={newUserRole}
+                  onChange={(e: any) => setNewUserRole(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm font-semibold"
+                >
+                  <option value="SALESEXECUTIVE">Sales Executive (Employee)</option>
+                  <option value="MANAGER">Manager / HR</option>
+                  <option value="SUPERADMIN">Super Admin / Business Owner</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">Mobile Phone (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="+919876543210"
+                  value={newUserPhone}
+                  onChange={(e) => setNewUserPhone(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-xl text-sm"
+                />
+              </div>
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowAddUserModal(false)}
+                  className="px-4 py-2 border border-gray-300 rounded-xl text-xs font-semibold text-gray-600 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 shadow-md shadow-indigo-600/30"
+                >
+                  Create Account
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
