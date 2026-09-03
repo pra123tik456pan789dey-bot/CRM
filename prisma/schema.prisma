@@ -1,0 +1,328 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Company {
+  id                String         @id @default(cuid())
+  name              String
+  logo_url          String?
+  theme_color       String?        @default("#4F46E5")
+  subscription_plan String?        @default("ENTERPRISE")
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  teams             Team[]
+  users             User[]
+  leads             Lead[]
+  pipelines         Pipeline[]
+  tags              Tag[]
+  invoices          Invoice[]
+  tickets           Ticket[]
+  workflows         WorkflowRule[]
+}
+
+model Team {
+  id          String            @id @default(cuid())
+  company_id  String?
+  company     Company?          @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  name        String
+  users       User[]
+  whatsapp_accounts WhatsAppAccount[]
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model User {
+  id            String   @id @default(cuid())
+  company_id    String?
+  company       Company? @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  name          String
+  email         String   @unique
+  password_hash String
+  role          String   @default("SALESEXECUTIVE") // SUPERADMIN, MANAGER, SALESEXECUTIVE, VIEWER
+  phone         String?
+  team_id       String?
+  team          Team?    @relation(fields: [team_id], references: [id])
+  
+  assignedLeads Lead[]             @relation("LeadAssignee")
+  assignedDeals Deal[]             @relation("DealAssignee")
+  assignedTasks Task[]             @relation("TaskAssignee")
+  assignedTickets Ticket[]         @relation("TicketAssignee")
+  activities    Activity[]         @relation("ActivityCreator")
+  callLogs      CallLog[]          @relation("CallAgent")
+  whatsapp_accounts WhatsAppAccount[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Lead {
+  id            String   @id @default(cuid())
+  company_id    String?
+  company       Company? @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  name          String
+  email         String?
+  phone         String?
+  company_name  String?
+  address       String?
+  status        String   @default("NEW") // NEW, CONTACTED, QUALIFIED, PROPOSAL, NEGOTIATION, WON, LOST
+  source        String   @default("MANUAL") // WEBSITE, FACEBOOK, GOOGLE, REFERRAL, WALK_IN, WHATSAPP, COLD_CALL, OTHER
+  tags          String?  // Comma-separated or tag names
+  custom_fields String?  // JSON string
+  ai_score      Int      @default(75) // 0-100 AI Lead Score
+  sentiment     String   @default("POSITIVE") // POSITIVE, NEUTRAL, NEGATIVE
+  
+  assigned_to   String?
+  assignee      User?    @relation("LeadAssignee", fields: [assigned_to], references: [id], onDelete: SetNull)
+  
+  facebook_page_id     String?
+  facebook_ad_id       String?
+  facebook_campaign_id String?
+
+  deals         Deal[]
+  tasks         Task[]
+  activities    Activity[]
+  messages      WhatsAppMessage[]
+  callLogs      CallLog[]
+  invoices      Invoice[]
+  tickets       Ticket[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Pipeline {
+  id          String          @id @default(cuid())
+  company_id  String?
+  company     Company?        @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  name        String
+  stages      PipelineStage[]
+  deals       Deal[]
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+}
+
+model PipelineStage {
+  id          String   @id @default(cuid())
+  pipeline_id String
+  pipeline    Pipeline @relation(fields: [pipeline_id], references: [id], onDelete: Cascade)
+  name        String
+  order_index Int      @default(0)
+  color       String?  @default("bg-blue-100 text-blue-800")
+  deals       Deal[]
+}
+
+model Deal {
+  id                 String         @id @default(cuid())
+  contact_id         String
+  contact            Lead           @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+  pipeline_id        String?
+  pipeline           Pipeline?      @relation(fields: [pipeline_id], references: [id], onDelete: SetNull)
+  stage_id           String?
+  stageRelation      PipelineStage? @relation(fields: [stage_id], references: [id], onDelete: SetNull)
+  
+  title              String
+  value              Float          @default(0.0)
+  currency           String         @default("INR")
+  stage              String         @default("NEW") // NEW, CONTACTED, PROPOSAL, NEGOTIATION, WON, LOST
+  probability        Int            @default(50)
+  expected_close_date DateTime?
+  notes              String?
+  
+  assigned_to        String?
+  assignee           User?          @relation("DealAssignee", fields: [assigned_to], references: [id], onDelete: SetNull)
+  tasks              Task[]
+  
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+}
+
+model Task {
+  id          String    @id @default(cuid())
+  contact_id  String?
+  contact     Lead?     @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+  deal_id     String?
+  deal        Deal?     @relation(fields: [deal_id], references: [id], onDelete: Cascade)
+  
+  title       String
+  description String?
+  due_date    DateTime
+  priority    String    @default("MEDIUM") // LOW, MEDIUM, HIGH
+  status      String    @default("PENDING") // PENDING, COMPLETED
+  
+  assigned_to String?
+  assignee    User?     @relation("TaskAssignee", fields: [assigned_to], references: [id], onDelete: SetNull)
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Activity {
+  id            String   @id @default(cuid())
+  contact_id    String
+  contact       Lead     @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+  agent_id      String?
+  agent         User?    @relation("ActivityCreator", fields: [agent_id], references: [id], onDelete: SetNull)
+  
+  type          String   // CALL, WHATSAPP, EMAIL, NOTE, STATUS_CHANGE, INVOICE, TICKET
+  content       String?
+  metadata      String?  // JSON formatted data
+  timestamp     DateTime @default(now())
+}
+
+model Invoice {
+  id             String        @id @default(cuid())
+  company_id     String?
+  company        Company?      @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  contact_id     String
+  contact        Lead          @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+  
+  invoice_number String        @unique
+  subtotal       Float         @default(0.0)
+  gst_rate       Float         @default(18.0) // 18% GST
+  gst_amount     Float         @default(0.0)
+  total_amount   Float         @default(0.0)
+  status         String        @default("UNPAID") // UNPAID, PAID, OVERDUE
+  due_date       DateTime
+  payment_link   String?
+  items          InvoiceItem[]
+  
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+}
+
+model InvoiceItem {
+  id          String   @id @default(cuid())
+  invoice_id  String
+  invoice     Invoice  @relation(fields: [invoice_id], references: [id], onDelete: Cascade)
+  description String
+  quantity    Int      @default(1)
+  unit_price  Float    @default(0.0)
+  total       Float    @default(0.0)
+}
+
+model Ticket {
+  id            String    @id @default(cuid())
+  company_id    String?
+  company       Company?  @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  contact_id    String
+  contact       Lead      @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+  
+  ticket_number String    @unique
+  subject       String
+  description   String?
+  priority      String    @default("MEDIUM") // LOW, MEDIUM, HIGH, URGENT
+  status        String    @default("OPEN") // OPEN, IN_PROGRESS, RESOLVED, CLOSED
+  sla_due_at    DateTime
+  
+  assigned_to   String?
+  assignee      User?     @relation("TicketAssignee", fields: [assigned_to], references: [id], onDelete: SetNull)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model WorkflowRule {
+  id            String   @id @default(cuid())
+  company_id    String?
+  company       Company? @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  
+  name          String
+  trigger_event String   // LEAD_CREATED, STATUS_CHANGED, NO_REPLY_2_DAYS
+  action_type   String   // SEND_WHATSAPP, SEND_EMAIL, REASSIGN_LEAD, ADD_TAG
+  action_config String   // JSON config
+  is_active     Boolean  @default(true)
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model WhatsAppAccount {
+  id                String   @id @default(cuid())
+  company_id        String?
+  phoneNumberId     String   @unique
+  whatsappBizId     String?
+  accessToken       String?
+  webhookVerifyToken String?
+  session_name      String?  // Name for local QR session (e.g. session-emp-1)
+  qr_code_url       String?  // Data URL for QR Code pairing
+  assigned_to_user  String?
+  assigned_to_team  String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  last_active       DateTime @default(now())
+  status            String   @default("CONNECTED") // "CONNECTED", "DISCONNECTED", "WAITING_FOR_SCAN"
+
+  user              User?    @relation(fields: [assigned_to_user], references: [id])
+  team              Team?    @relation(fields: [assigned_to_team], references: [id])
+  messages          WhatsAppMessage[]
+}
+
+model WhatsAppMessage {
+  id                String   @id @default(cuid())
+  lead_id           String
+  lead              Lead     @relation(fields: [lead_id], references: [id], onDelete: Cascade)
+  whatsapp_acc_id   String?
+  account           WhatsAppAccount? @relation(fields: [whatsapp_acc_id], references: [id], onDelete: SetNull)
+  
+  direction         String   // INBOUND, OUTBOUND
+  message_type      String   @default("TEXT") // TEXT, IMAGE, DOCUMENT, TEMPLATE
+  message_text      String
+  media_url         String?
+  status            String   @default("SENT") // SENT, DELIVERED, READ
+  meta_message_id   String?  @unique // To track webhook updates
+  timestamp         DateTime @default(now())
+}
+
+model CallLog {
+  id               String   @id @default(cuid())
+  contact_id       String
+  contact          Lead     @relation(fields: [contact_id], references: [id], onDelete: Cascade)
+  agent_id         String?
+  agent            User?    @relation("CallAgent", fields: [agent_id], references: [id], onDelete: SetNull)
+  
+  direction        String   @default("OUTBOUND") // INBOUND, OUTBOUND
+  from_number      String?
+  to_number        String?
+  duration_seconds Int      @default(0)
+  status           String   @default("COMPLETED") // COMPLETED, MISSED, BUSY, FAILED
+  recording_url    String?
+  timestamp        DateTime @default(now())
+}
+
+model Tag {
+  id          String   @id @default(cuid())
+  company_id  String?
+  company     Company? @relation(fields: [company_id], references: [id], onDelete: Cascade)
+  name        String
+  color       String   @default("#4F46E5")
+}
+
+model AdsCampaign {
+  id          String   @id @default(cuid())
+  campaignId  String   @unique
+  name        String
+  platform    String   @default("FACEBOOK")
+  spend       Float    @default(0.0)
+  impressions Int      @default(0)
+  clicks      Int      @default(0)
+  leads       Int      @default(0)
+  revenue     Float    @default(0.0)
+  status      String   @default("ACTIVE")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model DatabaseBackup {
+  id           String   @id @default(cuid())
+  filename     String
+  file_size    Int
+  backup_type  String   @default("AUTOMATED") // AUTOMATED, MANUAL
+  download_url String?
+  createdAt    DateTime @default(now())
+}
