@@ -99,6 +99,7 @@ export default function DashboardLayoutClient({
   ];
 
   if (userRole !== "SALESEXECUTIVE") {
+    navLinks.push({ href: "/staff", label: "Staff & Users (IDs)", icon: UserPlus, category: "main" });
     navLinks.push({ href: "/automations", label: "Automations", icon: Zap, category: "module" });
   }
 

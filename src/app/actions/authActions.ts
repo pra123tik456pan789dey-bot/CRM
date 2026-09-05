@@ -142,3 +142,37 @@ export async function createEmployeeUserAction(data: {
     return { success: false, error: error.message || "Failed to create user account." };
   }
 }
+
+export async function getStaffUsersAction() {
+  try {
+    const users = await prisma.user.findMany({
+      orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        phone: true,
+        created_at: true,
+      },
+    });
+    return { success: true, users };
+  } catch (error: any) {
+    console.error("Error fetching staff users:", error);
+    return { success: false, users: [], error: error.message };
+  }
+}
+
+export async function deleteUserAction(userId: string) {
+  try {
+    if (!userId) return { success: false, error: "User ID required" };
+    await prisma.user.delete({
+      where: { id: userId },
+    });
+    return { success: true, message: "User deleted successfully" };
+  } catch (error: any) {
+    console.error("Error deleting user:", error);
+    return { success: false, error: error.message || "Failed to delete user." };
+  }
+}
+
