@@ -20,7 +20,8 @@ import {
   LogOut,
   Menu,
   X,
-  Smartphone
+  Smartphone,
+  UserPlus
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import { createEmployeeUserAction } from "@/app/actions/authActions";
