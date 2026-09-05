@@ -146,18 +146,19 @@ export async function createEmployeeUserAction(data: {
 export async function getStaffUsersAction() {
   try {
     const users = await prisma.user.findMany({
-      orderBy: { created_at: "desc" },
+      orderBy: { createdAt: "desc" },
       select: {
         id: true,
         name: true,
         email: true,
         role: true,
         phone: true,
-        created_at: true,
+        createdAt: true,
       },
     });
     return { success: true, users };
   } catch (error: any) {
+
     console.error("Error fetching staff users:", error);
     return { success: false, users: [], error: error.message };
   }
