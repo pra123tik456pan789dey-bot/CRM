@@ -46,6 +46,7 @@ model User {
   password_hash String
   role          String   @default("SALESEXECUTIVE") // SUPERADMIN, MANAGER, SALESEXECUTIVE, VIEWER
   phone         String?
+  aadhar_number String?
   team_id       String?
   team          Team?    @relation(fields: [team_id], references: [id])
   
