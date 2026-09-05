@@ -56,7 +56,7 @@ export default function DashboardLayoutClient({
     });
 
     if (res.success) {
-      setUserMsg(res.message);
+      setUserMsg(res.message || "Account created successfully");
       setNewUserName("");
       setNewUserEmail("");
       setNewUserPassword("");
@@ -64,8 +64,9 @@ export default function DashboardLayoutClient({
       setShowGlobalAddUserModal(false);
       setTimeout(() => setUserMsg(null), 4000);
     } else {
-      setUserMsg(`Error: ${res.error}`);
+      setUserMsg(`Error: ${res.error || "Failed to create account"}`);
     }
+
   };
 
   const currentUser = session?.user || { name: "User", email: "user@crm.com", role: "SALESEXECUTIVE" };
