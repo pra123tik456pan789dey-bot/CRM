@@ -54,7 +54,7 @@ export default function SuperAdminView({
     });
 
     if (res.success) {
-      setUserMsg(res.message);
+      setUserMsg(res.message || "Account created successfully");
       setNewUserName("");
       setNewUserEmail("");
       setNewUserPassword("");
@@ -62,7 +62,7 @@ export default function SuperAdminView({
       setShowAddUserModal(false);
       setTimeout(() => setUserMsg(null), 4000);
     } else {
-      setUserMsg(`Error: ${res.error}`);
+      setUserMsg(`Error: ${res.error || "Failed to create account"}`);
     }
   };
 
