@@ -17,19 +17,27 @@ export const authOptions: NextAuthOptions = {
         if (!credentials?.email || !credentials?.password) return null;
 
         try {
-          const emailInput = credentials.email.toLowerCase().trim();
-          const user = await prisma.user.findUnique({
-            where: { email: emailInput }
+          const input = credentials.email.toLowerCase().trim();
+          const cleanedPhone = input.replace(/\D/g, "");
+
+          const user = await prisma.user.findFirst({
+            where: {
+              OR: [
+                { email: input },
+                { phone: input },
+                ...(cleanedPhone.length >= 10 ? [{ phone: cleanedPhone }] : [])
+              ]
+            }
           });
 
           if (!user) {
-            console.log("[NextAuth] User not found:", emailInput);
+            console.log("[NextAuth] User not found for input:", input);
             return null;
           }
 
           const isPasswordValid = await bcrypt.compare(credentials.password, user.password_hash);
           if (!isPasswordValid) {
-            console.log("[NextAuth] Invalid password for user:", emailInput);
+            console.log("[NextAuth] Invalid password for user:", input);
             return null;
           }
 

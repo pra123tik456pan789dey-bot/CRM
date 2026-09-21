@@ -107,10 +107,9 @@ export default function LoginPage() {
     setLoginLoading(false);
 
     if (res?.error) {
-      setLoginError("Invalid email address or password.");
+      setLoginError("Invalid email address or password. Please check your credentials.");
     } else {
-      router.push("/");
-      router.refresh();
+      window.location.href = "/";
     }
   };
 
@@ -184,12 +183,15 @@ export default function LoginPage() {
 
     if (regRes.success) {
       setRegStep(3);
-      // Auto login so session persists
-      await signIn("credentials", {
+      // Auto login so session persists and navigate directly to dashboard
+      const autoLogin = await signIn("credentials", {
         email: regEmail,
         password: regPassword,
         redirect: false,
       });
+      if (!autoLogin?.error) {
+        window.location.href = "/";
+      }
     } else {
       setRegError(regRes.error || "Failed to create account.");
     }
@@ -302,14 +304,14 @@ export default function LoginPage() {
             )}
 
             <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1.5">Work Email Address</label>
+              <label className="block text-xs font-bold text-gray-700 mb-1.5">Work Email or Mobile Phone Number</label>
               <div className="relative">
                 <Mail className="w-4 h-4 text-gray-400 absolute left-3.5 top-3.5" />
                 <input
-                  type="email"
+                  type="text"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  placeholder="name@company.com"
+                  placeholder="name@company.com or 9876543210"
                   className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl text-sm font-semibold focus:bg-white focus:border-indigo-600 outline-none transition-all"
                   required
                 />
@@ -577,8 +579,7 @@ export default function LoginPage() {
                 </p>
                 <button
                   onClick={() => {
-                    router.push("/");
-                    router.refresh();
+                    window.location.href = "/";
                   }}
                   className="w-full py-3 bg-emerald-600 text-white rounded-xl font-extrabold text-xs hover:bg-emerald-700 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-emerald-600/30"
                 >

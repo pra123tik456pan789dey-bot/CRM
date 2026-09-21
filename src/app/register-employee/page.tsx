@@ -147,12 +147,15 @@ export default function RegisterEmployeePage() {
 
     if (regRes.success) {
       setStep(3);
-      // Auto Login so user session persists automatically
-      await signIn("credentials", {
+      // Auto Login so user session persists automatically and navigate directly to dashboard
+      const autoLogin = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
+      if (!autoLogin?.error) {
+        window.location.href = "/";
+      }
     } else {
       setError(regRes.error || "Failed to create employee account.");
     }
@@ -434,8 +437,7 @@ export default function RegisterEmployeePage() {
 
             <button
               onClick={() => {
-                router.push("/");
-                router.refresh();
+                window.location.href = "/";
               }}
               className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-extrabold text-sm hover:shadow-lg hover:shadow-indigo-600/30 transition-all shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2"
             >
