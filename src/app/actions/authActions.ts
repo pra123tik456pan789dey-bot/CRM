@@ -276,7 +276,11 @@ export async function registerEmployeeSelfAction(data: {
     };
   } catch (error: any) {
     console.error("Error in registerEmployeeSelfAction:", error);
-    return { success: false, error: error.message || "Failed to create employee account." };
+    let userErr = error.message || "Failed to create employee account.";
+    if (userErr.includes("ENOTFOUND") || userErr.includes("tenant/user") || userErr.includes("Can't reach database")) {
+      userErr = "Supabase Database is paused. Please open https://supabase.com/dashboard and click 'Restore Project' to unpause the database.";
+    }
+    return { success: false, error: userErr };
   }
 }
 
