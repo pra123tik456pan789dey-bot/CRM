@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Send, Phone, ArrowLeft, CheckCheck, FileText, Sparkles, Search, MessageSquare } from "lucide-react";
+import Link from "next/link";
+import { Send, Phone, ArrowLeft, CheckCheck, FileText, Sparkles, Search, MessageSquare, Settings } from "lucide-react";
 import { sendWhatsAppMessage } from "@/app/actions/whatsappActions";
 import { initiateClickToCall } from "@/app/actions/telephonyActions";
 
@@ -98,9 +99,18 @@ export default function ChatInterface({ initialLeads }: { initialLeads: any[] })
             <MessageSquare className="w-5 h-5" />
             <span className="font-bold text-base tracking-wide">WhatsApp Business</span>
           </div>
-          <span className="text-[10px] bg-[#128c7e] text-white font-black px-2 py-0.5 rounded-full border border-emerald-400">
-            {leads.length} Active
-          </span>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/settings/whatsapp"
+              className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-white font-bold text-xs rounded-lg flex items-center gap-1 border border-white/20 transition-all"
+              title="Configure WhatsApp API & Add Numbers"
+            >
+              <Settings className="w-3.5 h-3.5" /> Setup
+            </Link>
+            <span className="text-[10px] bg-[#128c7e] text-white font-black px-2 py-0.5 rounded-full border border-emerald-400">
+              {leads.length} Active
+            </span>
+          </div>
         </div>
 
         {/* Search Bar */}
@@ -120,7 +130,15 @@ export default function ChatInterface({ initialLeads }: { initialLeads: any[] })
         {/* Chat List */}
         <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
           {filteredLeads.length === 0 ? (
-            <div className="p-8 text-center text-gray-400 text-xs">No active WhatsApp chats.</div>
+            <div className="p-8 text-center text-gray-500 text-xs space-y-3">
+              <p>No active WhatsApp chats found.</p>
+              <Link
+                href="/settings/whatsapp"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-[#128c7e] text-white font-bold rounded-xl text-xs hover:bg-[#075e54] transition-colors shadow-sm"
+              >
+                <Settings className="w-3.5 h-3.5" /> Connect WhatsApp API
+              </Link>
+            </div>
           ) : (
             filteredLeads.map((lead) => {
               const lastMsg =
@@ -267,8 +285,16 @@ export default function ChatInterface({ initialLeads }: { initialLeads: any[] })
             <div className="w-16 h-16 rounded-full bg-[#128c7e]/10 text-[#128c7e] flex items-center justify-center mb-3">
               <MessageSquare className="w-8 h-8" />
             </div>
-            <h3 className="font-bold text-gray-800 text-sm">WhatsApp Business Inbox</h3>
-            <p className="text-xs text-gray-500 max-w-xs mt-1">Select a contact from the list to start messaging.</p>
+            <h3 className="font-bold text-gray-800 text-base">WhatsApp Business Inbox</h3>
+            <p className="text-xs text-gray-500 max-w-xs mt-1">
+              Select a contact from the list to start messaging, or click below to connect your WhatsApp Business account.
+            </p>
+            <Link
+              href="/settings/whatsapp"
+              className="mt-4 px-4 py-2.5 bg-[#128c7e] text-white rounded-xl text-xs font-extrabold hover:bg-[#075e54] transition-all flex items-center gap-2 shadow-md shadow-emerald-700/20"
+            >
+              <Settings className="w-4 h-4" /> Connect / Setup WhatsApp Account
+            </Link>
           </div>
         )}
       </div>
