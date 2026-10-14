@@ -6,11 +6,30 @@ import { getBackupHistory } from "@/app/actions/backupActions";
 export const dynamic = "force-dynamic";
 
 export default async function SuperAdminPage() {
-  const company = await prisma.company.findFirst();
-  const users = await prisma.user.findMany({ orderBy: { createdAt: "asc" } });
-  const whatsappAccounts = await getAllWhatsAppAccounts();
-  const backups = await getBackupHistory();
+  let company = null;
+  let users: any[] = [];
+  let whatsappAccounts: any[] = [];
+  let backups: any[] = [];
+  let dbError: string | null = null;
 
-  return <SuperAdminView company={company} users={users} whatsappAccounts={whatsappAccounts} backups={backups} />;
+  try {
+    company = await prisma.company.findFirst();
+    users = await prisma.user.findMany({ orderBy: { createdAt: "asc" } });
+    whatsappAccounts = await getAllWhatsAppAccounts();
+    backups = await getBackupHistory();
+  } catch (err: any) {
+    console.error("SuperAdminPage DB Fetch Error:", err);
+    dbError = err.message || "Database connection error";
+  }
+
+  return (
+    <SuperAdminView
+      company={company}
+      users={users}
+      whatsappAccounts={whatsappAccounts}
+      backups={backups}
+      dbError={dbError}
+    />
+  );
 }
 

@@ -98,12 +98,9 @@ export default function DashboardLayoutClient({
     { href: "/invoices", label: "GST Billing", icon: FileText, category: "module" },
     { href: "/tickets", label: "Helpdesk SLA", icon: LifeBuoy, category: "module" },
     { href: "/ads", label: "Ads Analytics", icon: BarChart3, category: "comm" },
+    { href: "/staff", label: "Staff & Users (IDs)", icon: UserPlus, category: "main" },
+    { href: "/automations", label: "Automations", icon: Zap, category: "module" },
   ];
-
-  if (userRole !== "SALESEXECUTIVE") {
-    navLinks.push({ href: "/staff", label: "Staff & Users (IDs)", icon: UserPlus, category: "main" });
-    navLinks.push({ href: "/automations", label: "Automations", icon: Zap, category: "module" });
-  }
 
   return (
     <div className="flex h-screen bg-gray-50/50 text-gray-800 font-sans overflow-hidden">
@@ -190,25 +187,21 @@ export default function DashboardLayoutClient({
         </nav>
 
         <div className="p-3 border-t border-gray-100 space-y-1.5 bg-gray-50/50">
-          {userRole === "SUPERADMIN" && (
-            <Link
-              href="/super-admin"
-              className="flex items-center gap-2.5 px-3 py-2 text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl font-bold text-xs transition-colors"
-            >
-              <Shield className="w-4 h-4 text-purple-600" />
-              SaaS Super Panel
-            </Link>
-          )}
+          <Link
+            href="/super-admin"
+            className="flex items-center gap-2.5 px-3 py-2 text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl font-bold text-xs transition-colors"
+          >
+            <Shield className="w-4 h-4 text-purple-600" />
+            SaaS Super Panel (Admin)
+          </Link>
 
-          {userRole !== "SALESEXECUTIVE" && (
-            <Link
-              href="/settings"
-              className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-white rounded-xl font-semibold text-xs transition-colors"
-            >
-              <Settings className="w-4 h-4 text-gray-500" />
-              Settings
-            </Link>
-          )}
+          <Link
+            href="/settings"
+            className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-white rounded-xl font-semibold text-xs transition-colors"
+          >
+            <Settings className="w-4 h-4 text-gray-500" />
+            Settings
+          </Link>
 
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}
@@ -284,16 +277,23 @@ export default function DashboardLayoutClient({
         </nav>
 
         <div className="p-4 border-t border-gray-100 space-y-2">
-          {userRole === "SUPERADMIN" && (
-            <Link
-              href="/super-admin"
-              onClick={() => setMobileMenuOpen(false)}
-              className="flex items-center gap-3 px-3.5 py-2.5 text-purple-700 bg-purple-50 rounded-xl font-bold text-xs"
-            >
-              <Shield className="w-4 h-4 text-purple-600" />
-              SaaS Super Panel
-            </Link>
-          )}
+          <Link
+            href="/super-admin"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-3 px-3.5 py-2.5 text-purple-700 bg-purple-50 rounded-xl font-bold text-xs"
+          >
+            <Shield className="w-4 h-4 text-purple-600" />
+            SaaS Super Panel (Admin)
+          </Link>
+
+          <Link
+            href="/settings"
+            onClick={() => setMobileMenuOpen(false)}
+            className="flex items-center gap-3 px-3.5 py-2.5 text-gray-700 hover:bg-gray-50 rounded-xl font-semibold text-xs"
+          >
+            <Settings className="w-4 h-4 text-gray-500" />
+            Settings
+          </Link>
 
           <button
             onClick={() => {
@@ -339,15 +339,22 @@ export default function DashboardLayoutClient({
           </div>
 
           <div className="flex items-center gap-2 sm:gap-4">
-            {userRole === "SUPERADMIN" && (
-              <button
-                onClick={() => setShowGlobalAddUserModal(true)}
-                className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-xs font-bold hover:shadow-lg hover:shadow-indigo-500/20 transition-all flex items-center gap-1.5 shadow-md shadow-indigo-600/30"
-              >
-                <Users className="w-4 h-4" />
-                <span>+ Create Staff ID</span>
-              </button>
-            )}
+            <Link
+              href="/super-admin"
+              className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+              title="Open Admin Page"
+            >
+              <Shield className="w-3.5 h-3.5 text-purple-600" />
+              <span>Admin Panel</span>
+            </Link>
+
+            <button
+              onClick={() => setShowGlobalAddUserModal(true)}
+              className="px-3 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl text-xs font-bold hover:shadow-lg hover:shadow-indigo-500/20 transition-all flex items-center gap-1.5 shadow-md shadow-indigo-600/30"
+            >
+              <Users className="w-4 h-4" />
+              <span>+ Create Staff ID</span>
+            </button>
 
             <button className="p-2 text-gray-500 hover:bg-gray-100 rounded-xl relative">
               <Bell className="w-5 h-5" />

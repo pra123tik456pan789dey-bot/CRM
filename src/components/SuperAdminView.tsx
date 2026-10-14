@@ -10,12 +10,14 @@ export default function SuperAdminView({
   company,
   users,
   whatsappAccounts = [],
-  backups = []
+  backups = [],
+  dbError = null
 }: {
   company: any;
   users: any[];
   whatsappAccounts?: any[];
   backups?: any[];
+  dbError?: string | null;
 }) {
   const [tenantName, setTenantName] = useState(company?.name || "Apex Global Technologies");
   const [logoUrl, setLogoUrl] = useState(company?.logo_url || "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&auto=format&fit=crop&q=60");
@@ -109,6 +111,27 @@ export default function SuperAdminView({
           <Shield className="w-4 h-4" /> SUPER ADMIN ACCESS
         </span>
       </div>
+
+      {dbError && (
+        <div className="p-4 bg-amber-50 border border-amber-300 text-amber-900 text-xs rounded-2xl space-y-2 shadow-sm">
+          <div className="flex items-center gap-2 font-bold text-sm text-amber-900">
+            <span>⚠️ Supabase Database is Inactive / Paused</span>
+          </div>
+          <p className="text-amber-800 leading-relaxed">
+            Free-tier Supabase database automatically pause ho jaata hai jab kuch din tak koi request nahi aati. Isse wapas active karne ke liye Supabase Dashboard me jaakar <strong>"Restore project"</strong> par click karein.
+          </p>
+          <div className="pt-1">
+            <a
+              href="https://supabase.com/dashboard/project/notxjzexnkzllysxtaag"
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-extrabold rounded-xl transition-all shadow-sm"
+            >
+              Open Supabase Dashboard & Restore →
+            </a>
+          </div>
+        </div>
+      )}
 
       {saved && (
         <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-800 text-sm rounded-xl font-medium flex items-center gap-2">
