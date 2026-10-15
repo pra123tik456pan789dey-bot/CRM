@@ -46,13 +46,25 @@ async function main() {
 
   const admin = await prisma.user.create({
     data: {
-      name: 'Amit Sharma',
-      email: 'admin@crm.com',
+      name: 'Prateek',
+      email: 'prateek1562@gmail.com',
       password_hash: hashedPassword,
       role: 'SUPERADMIN',
       company_id: company.id,
       team_id: team.id,
       phone: '+919876543210'
+    }
+  });
+
+  const secondaryAdmin = await prisma.user.create({
+    data: {
+      name: 'Admin User',
+      email: 'admin@crm.com',
+      password_hash: hashedPassword,
+      role: 'SUPERADMIN',
+      company_id: company.id,
+      team_id: team.id,
+      phone: '+919876543299'
     }
   });
 

@@ -1,6 +1,6 @@
 import { PrismaClient } from "@prisma/client";
 
-const defaultDbUrl = "postgresql://postgres.notxjzexnkzllysxtaag:Jaibabaki1%40%23%24@aws-0-ap-northeast-2.pooler.supabase.com:5432/postgres";
+const defaultDbUrl = "postgresql://neondb_owner:npg_so3lJbi0LNTD@ep-small-leaf-b5t4zxzq-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require";
 
 if (!process.env.DATABASE_URL) {
   process.env.DATABASE_URL = defaultDbUrl;
