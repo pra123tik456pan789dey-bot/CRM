@@ -20,9 +20,13 @@ import {
   Users,
   Sparkles,
   CheckCircle2,
-  MessageCircle
+  MessageCircle,
+  PhoneCall,
+  ChevronRight,
+  Send,
+  X
 } from "lucide-react";
-import { createLead, bulkAssignLeadsAction } from "@/app/actions/leadActions";
+import { createLead, bulkAssignLeadsAction, updateLeadStatus, addLeadNote } from "@/app/actions/leadActions";
 import { bulkImportLeads } from "@/app/actions/csvImportActions";
 import KanbanDealsBoard from "./KanbanDealsBoard";
 
@@ -49,6 +53,30 @@ export default function LeadManagementView({
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
   const [showCsvModal, setShowCsvModal] = useState(false);
+
+  // Mobile WhatsApp-style View State
+  const [selectedMobileLead, setSelectedMobileLead] = useState<any | null>(null);
+  const [mobileQuickNote, setMobileQuickNote] = useState("");
+  const [isSavingNote, setIsSavingNote] = useState(false);
+  const [mobileTab, setMobileTab] = useState<"ALL" | "RE_INQUIRY" | "NEW" | "WON">("ALL");
+  const [noteSuccess, setNoteSuccess] = useState(false);
+
+  const handleMobileStatusChange = async (leadId: string, newStatus: string) => {
+    if (selectedMobileLead) {
+      setSelectedMobileLead({ ...selectedMobileLead, status: newStatus });
+    }
+    await updateLeadStatus(leadId, newStatus);
+  };
+
+  const handleMobileSaveNote = async () => {
+    if (!selectedMobileLead || !mobileQuickNote.trim()) return;
+    setIsSavingNote(true);
+    await addLeadNote(selectedMobileLead.id, mobileQuickNote.trim());
+    setMobileQuickNote("");
+    setIsSavingNote(false);
+    setNoteSuccess(true);
+    setTimeout(() => setNoteSuccess(false), 3000);
+  };
 
   // New Lead Form State
   const [name, setName] = useState("");
@@ -158,14 +186,22 @@ export default function LeadManagementView({
 
     const matchesStatus = statusFilter === "ALL" || lead.status === statusFilter;
     const matchesSource = sourceFilter === "ALL" || lead.source === sourceFilter;
+    const matchesMobileTab =
+      mobileTab === "ALL"
+        ? true
+        : mobileTab === "RE_INQUIRY"
+        ? (lead.inquiry_count && lead.inquiry_count > 1)
+        : mobileTab === "NEW"
+        ? lead.status === "NEW"
+        : lead.status === "WON";
 
-    return matchesSearch && matchesStatus && matchesSource;
+    return matchesSearch && matchesStatus && matchesSource && matchesMobileTab;
   });
 
   return (
     <div className="h-full flex flex-col space-y-4 sm:space-y-6">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+      {/* Top Header (Desktop Only) */}
+      <div className="hidden md:flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">Lead & Deal Management</h1>
           <p className="text-xs sm:text-sm text-gray-500 mt-0.5">Track pipeline stages, search leads, and import bulk contacts.</p>
@@ -209,8 +245,8 @@ export default function LeadManagementView({
         </div>
       </div>
 
-      {/* Filter & Search Bar */}
-      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-sm flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+      {/* Filter & Search Bar (Desktop Only) */}
+      <div className="hidden md:flex bg-white p-3.5 sm:p-4 rounded-2xl border border-gray-200 shadow-sm flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
         <div className="flex-1 relative">
           <Search className="w-4 h-4 text-gray-400 absolute left-3 top-3" />
           <input
@@ -258,10 +294,178 @@ export default function LeadManagementView({
         </div>
       </div>
 
-      {/* Main View Display */}
-      {viewMode === "board" ? (
-        <div className="overflow-x-auto pb-4">
-          <KanbanDealsBoard
+      {/* 📱 WHATSAPP-STYLE MOBILE CALLING DESK (Visible ONLY on mobile screens) */}
+      <div className="block md:hidden space-y-3 pb-8">
+        {/* WhatsApp-Style App Header */}
+        <div className="bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 p-4 rounded-2xl text-white shadow-md">
+          <div className="flex justify-between items-center mb-3">
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-300 animate-pulse" />
+                <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-100">
+                  Mobile Calling App
+                </span>
+              </div>
+              <h2 className="text-xl font-black tracking-tight mt-0.5">My Client Leads</h2>
+            </div>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="w-10 h-10 rounded-full bg-white text-emerald-700 flex items-center justify-center font-bold text-lg shadow-md active:scale-90 transition-transform cursor-pointer"
+              title="Add New Lead"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Quick Instant Search */}
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-200" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search client name or number..."
+              className="w-full pl-9 pr-3 py-2.5 bg-white/15 backdrop-blur-md rounded-xl text-xs text-white placeholder-emerald-100/70 border border-white/20 outline-none focus:bg-white/25 transition-all font-medium"
+            />
+          </div>
+
+          {/* WhatsApp-Style Filter Pills */}
+          <div className="flex gap-2 overflow-x-auto pt-3 pb-1 text-xs scrollbar-none">
+            <button
+              onClick={() => setMobileTab("ALL")}
+              className={`px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all shadow-xs cursor-pointer ${
+                mobileTab === "ALL" ? "bg-white text-emerald-800" : "bg-white/15 text-white"
+              }`}
+            >
+              All ({initialLeads.length})
+            </button>
+            <button
+              onClick={() => setMobileTab("RE_INQUIRY")}
+              className={`px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all flex items-center gap-1.5 shadow-xs cursor-pointer ${
+                mobileTab === "RE_INQUIRY" ? "bg-amber-400 text-amber-950 font-black" : "bg-white/15 text-white"
+              }`}
+            >
+              <Flame className="w-3.5 h-3.5 fill-current" />
+              Re-enquiries ({initialLeads.filter((l) => l.inquiry_count > 1).length})
+            </button>
+            <button
+              onClick={() => setMobileTab("NEW")}
+              className={`px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all shadow-xs cursor-pointer ${
+                mobileTab === "NEW" ? "bg-white text-emerald-800" : "bg-white/15 text-white"
+              }`}
+            >
+              New Leads ({initialLeads.filter((l) => l.status === "NEW").length})
+            </button>
+            <button
+              onClick={() => setMobileTab("WON")}
+              className={`px-3.5 py-1.5 rounded-full font-bold whitespace-nowrap transition-all shadow-xs cursor-pointer ${
+                mobileTab === "WON" ? "bg-white text-emerald-800" : "bg-white/15 text-white"
+              }`}
+            >
+              Won ({initialLeads.filter((l) => l.status === "WON").length})
+            </button>
+          </div>
+        </div>
+
+        {/* WhatsApp-Style Contacts List */}
+        <div className="space-y-2">
+          {filteredLeads.length === 0 ? (
+            <div className="bg-white p-8 rounded-2xl text-center border border-gray-200">
+              <p className="text-gray-400 text-sm font-medium">Koi lead nahi mili.</p>
+            </div>
+          ) : (
+            filteredLeads.map((lead) => (
+              <div
+                key={lead.id}
+                className="bg-white p-3.5 rounded-2xl border border-gray-200/70 shadow-xs flex items-center justify-between gap-3 active:bg-gray-50 transition-colors"
+              >
+                {/* Left: Avatar with Re-Inquiry Badge */}
+                <div
+                  className="relative shrink-0 cursor-pointer"
+                  onClick={() => setSelectedMobileLead(lead)}
+                >
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 to-teal-600 text-white font-extrabold flex items-center justify-center text-sm shadow-sm">
+                    {lead.name.substring(0, 2).toUpperCase()}
+                  </div>
+                  {lead.inquiry_count > 1 && (
+                    <span className="absolute -top-1 -right-1 bg-amber-500 text-white text-[9px] font-black px-1.5 py-0.5 rounded-full border-2 border-white flex items-center gap-0.5 shadow-xs">
+                      🔥{lead.inquiry_count}x
+                    </span>
+                  )}
+                </div>
+
+                {/* Middle: Details (Clickable to open drawer) */}
+                <div
+                  className="flex-1 min-w-0 cursor-pointer"
+                  onClick={() => setSelectedMobileLead(lead)}
+                >
+                  <div className="flex items-center justify-between gap-1 mb-0.5">
+                    <h4 className="font-bold text-gray-900 text-sm truncate">{lead.name}</h4>
+                    <span className="text-[10px] text-gray-400 font-medium shrink-0 font-mono">
+                      {new Date(lead.createdAt).toLocaleTimeString("en-IN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true
+                      })}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 truncate mb-1">
+                    {lead.company_name || lead.phone || "No details"}
+                  </p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                        lead.status === "WON"
+                          ? "bg-green-100 text-green-800"
+                          : lead.status === "QUALIFIED"
+                          ? "bg-indigo-100 text-indigo-800"
+                          : lead.status === "PROPOSAL"
+                          ? "bg-purple-100 text-purple-800"
+                          : "bg-blue-100 text-blue-800"
+                      }`}
+                    >
+                      {lead.status}
+                    </span>
+                    <span className="text-[10px] text-gray-400 font-medium">
+                      • {lead.source}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Right: Big Quick Action Touch Buttons */}
+                <div className="flex items-center gap-2 shrink-0">
+                  {lead.phone && (
+                    <>
+                      <a
+                        href={`tel:${lead.phone}`}
+                        className="w-10 h-10 rounded-full bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white flex items-center justify-center shadow-xs active:scale-90 transition-all border border-emerald-200"
+                        title="Direct SIM Call"
+                      >
+                        <Phone className="w-4 h-4 fill-emerald-600" />
+                      </a>
+                      <a
+                        href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="w-10 h-10 rounded-full bg-green-500 text-white hover:bg-green-600 flex items-center justify-center shadow-md active:scale-90 transition-all"
+                        title="Open WhatsApp Chat"
+                      >
+                        <MessageCircle className="w-5 h-5 fill-white" />
+                      </a>
+                    </>
+                  )}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Main Desktop View Display (Hidden on mobile) */}
+      <div className="hidden md:block flex-1">
+        {viewMode === "board" ? (
+          <div className="overflow-x-auto pb-4">
+            <KanbanDealsBoard
             initialPipeline={pipelineData.pipeline}
             initialDeals={pipelineData.deals}
             leads={filteredLeads}
@@ -415,6 +619,120 @@ export default function LeadManagementView({
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+      </div>
+
+      {/* 📱 WHATSAPP-STYLE MOBILE LEAD QUICK ACTION BOTTOM SHEET */}
+      {selectedMobileLead && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end justify-center md:hidden animate-in fade-in">
+          <div className="bg-white w-full rounded-t-3xl max-h-[85vh] overflow-y-auto p-5 space-y-4 shadow-2xl animate-in slide-in-from-bottom-10">
+            {/* Sheet Handle & Header */}
+            <div className="flex justify-between items-start border-b border-gray-100 pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-emerald-500 to-indigo-600 text-white font-extrabold flex items-center justify-center text-base shadow-sm">
+                  {selectedMobileLead.name.substring(0, 2).toUpperCase()}
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h3 className="font-black text-gray-900 text-base">{selectedMobileLead.name}</h3>
+                    {selectedMobileLead.inquiry_count > 1 && (
+                      <span className="bg-amber-100 text-amber-800 text-[10px] font-black px-1.5 py-0.5 rounded-full border border-amber-300">
+                        🔥{selectedMobileLead.inquiry_count}x
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-gray-500 font-mono font-medium">{selectedMobileLead.phone || "No phone"}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setSelectedMobileLead(null)}
+                className="w-8 h-8 rounded-full bg-gray-100 text-gray-500 hover:bg-gray-200 flex items-center justify-center cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Big Action Buttons (Call / WhatsApp) */}
+            <div className="grid grid-cols-2 gap-2.5">
+              <a
+                href={selectedMobileLead.phone ? `tel:${selectedMobileLead.phone}` : "#"}
+                className="flex items-center justify-center gap-2 py-3 bg-emerald-600 text-white rounded-2xl font-bold text-sm shadow-md active:scale-95 transition-all"
+              >
+                <Phone className="w-4 h-4 fill-white" /> Direct SIM Call
+              </a>
+              <a
+                href={selectedMobileLead.phone ? `https://wa.me/${selectedMobileLead.phone.replace(/\D/g, "")}` : "#"}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center justify-center gap-2 py-3 bg-green-500 text-white rounded-2xl font-bold text-sm shadow-md active:scale-95 transition-all"
+              >
+                <MessageCircle className="w-4 h-4 fill-white" /> WhatsApp Chat
+              </a>
+            </div>
+
+            {/* Quick 1-Tap Status Selector */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-2">
+                ⚡ 1-Tap Status Update:
+              </label>
+              <div className="grid grid-cols-3 gap-1.5 text-xs">
+                {["NEW", "CONTACTED", "QUALIFIED", "PROPOSAL", "WON", "LOST"].map((st) => (
+                  <button
+                    key={st}
+                    onClick={() => handleMobileStatusChange(selectedMobileLead.id, st)}
+                    className={`py-2 px-2 rounded-xl font-bold border transition-all text-center cursor-pointer ${
+                      selectedMobileLead.status === st
+                        ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+                        : "bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100"
+                    }`}
+                  >
+                    {st === "NEW" ? "New Lead" :
+                     st === "CONTACTED" ? "Contacted" :
+                     st === "QUALIFIED" ? "Interested" :
+                     st === "PROPOSAL" ? "Proposal" :
+                     st === "WON" ? "Closed Won ✅" : "Lost ❌"}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Note Input */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-bold text-gray-700">
+                📝 Add Quick Note (Call Summary):
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={mobileQuickNote}
+                  onChange={(e) => setMobileQuickNote(e.target.value)}
+                  placeholder="e.g. Rate manga hai, kal phone karna hai..."
+                  className="flex-1 px-3 py-2 text-xs border border-gray-300 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+                <button
+                  onClick={handleMobileSaveNote}
+                  disabled={isSavingNote || !mobileQuickNote.trim()}
+                  className="px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold hover:bg-indigo-700 disabled:opacity-50 flex items-center gap-1 shrink-0 cursor-pointer"
+                >
+                  <Send className="w-3.5 h-3.5" /> {isSavingNote ? "..." : "Save"}
+                </button>
+              </div>
+              {noteSuccess && (
+                <p className="text-emerald-600 text-xs font-bold">✅ Note saved to CRM timeline!</p>
+              )}
+            </div>
+
+            {/* Full Timeline Link */}
+            <div className="pt-2">
+              <Link
+                href={`/leads/${selectedMobileLead.id}`}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-gray-100 text-gray-800 rounded-xl font-bold text-xs hover:bg-gray-200 transition-colors"
+              >
+                View Full Timeline & Audio Recordings <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
         </div>
       )}
 

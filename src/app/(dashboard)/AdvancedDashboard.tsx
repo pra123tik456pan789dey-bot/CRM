@@ -56,6 +56,67 @@ export default function AdvancedDashboard({ stats }: { stats: any }) {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      {/* 📱 Mobile Employee Quick-Launch Card (Visible ONLY on mobile screens) */}
+      <div className="block md:hidden bg-gradient-to-r from-emerald-600 via-teal-600 to-indigo-700 p-5 rounded-3xl text-white shadow-xl space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-300 animate-ping" />
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-100">
+                Staff Mobile App
+              </span>
+            </div>
+            <h2 className="text-xl font-black mt-1">Namaste! 👋</h2>
+            <p className="text-xs text-emerald-100/90 mt-0.5">Aapka mobile CRM desk ready hai.</p>
+          </div>
+        </div>
+
+        {/* 2 Large Touch Friendly Action Buttons */}
+        <div className="grid grid-cols-2 gap-2.5 pt-1">
+          <Link
+            href="/leads"
+            className="flex items-center gap-2.5 p-3.5 bg-white text-emerald-900 rounded-2xl font-black text-xs shadow-md active:scale-95 transition-all"
+          >
+            <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+              <MessageCircle className="w-5 h-5 fill-emerald-600" />
+            </div>
+            <div>
+              <span className="block text-sm font-black">My Leads</span>
+              <span className="text-[10px] text-gray-500 font-normal">WhatsApp & Calls</span>
+            </div>
+          </Link>
+
+          <Link
+            href="/calls"
+            className="flex items-center gap-2.5 p-3.5 bg-white text-indigo-950 rounded-2xl font-black text-xs shadow-md active:scale-95 transition-all"
+          >
+            <div className="w-9 h-9 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center shrink-0">
+              <Phone className="w-5 h-5 fill-indigo-600" />
+            </div>
+            <div>
+              <span className="block text-sm font-black">Call Logs</span>
+              <span className="text-[10px] text-gray-500 font-normal">Audio Records</span>
+            </div>
+          </Link>
+        </div>
+
+        {/* Today's Stats Bar */}
+        <div className="grid grid-cols-3 gap-2 bg-black/15 backdrop-blur-md p-3 rounded-2xl border border-white/10 text-center">
+          <div>
+            <p className="text-[10px] text-emerald-200 uppercase font-semibold">Total Leads</p>
+            <p className="text-base font-black text-white mt-0.5">{stats.totalLeads || 0}</p>
+          </div>
+          <div className="border-x border-white/10">
+            <p className="text-[10px] text-emerald-200 uppercase font-semibold">Total Calls</p>
+            <p className="text-base font-black text-white mt-0.5">{stats.totalCalls || 0}</p>
+          </div>
+          <div>
+            <p className="text-[10px] text-emerald-200 uppercase font-semibold">Won Deals</p>
+            <p className="text-base font-black text-emerald-300 mt-0.5">{stats.wonLeads || 0}</p>
+          </div>
+        </div>
+      </div>
+
       {/* Top 4 Key Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5">
         <div className="bg-white p-4 sm:p-6 rounded-2xl border border-gray-200 shadow-sm flex items-center justify-between">
