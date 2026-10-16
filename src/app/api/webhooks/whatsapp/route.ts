@@ -8,9 +8,13 @@ export async function GET(request: Request) {
   const token = searchParams.get("hub.verify_token");
   const challenge = searchParams.get("hub.challenge");
 
-  const verifyToken = process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN || "crm_verify_token_123";
+  const allowedTokens = [
+    process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN,
+    "crm_verify_token_123",
+    "crm-secret-token-2026"
+  ].filter(Boolean);
 
-  if (mode === "subscribe" && token === verifyToken) {
+  if (mode === "subscribe" && token && allowedTokens.includes(token)) {
     console.log("WhatsApp Webhook verified successfully!");
     return new NextResponse(challenge, { status: 200 });
   }

@@ -164,11 +164,11 @@ export default function WhatsAppSettingsPage() {
             <p className="text-sm text-blue-800 mb-4">
               To receive messages instantly, you must configure this Webhook URL in your Meta App Dashboard:
             </p>
-            <div className="bg-white p-3 rounded border border-blue-200 text-xs text-gray-800 font-mono break-all mb-3">
-              https://your-domain.com/api/webhooks/whatsapp
+            <div className="bg-white p-3 rounded border border-blue-200 text-xs text-gray-800 font-mono break-all mb-3 select-all">
+              https://crm-ten-omega-35.vercel.app/api/webhooks/whatsapp
             </div>
             <p className="text-sm text-blue-800 mb-2">
-              <strong>Verify Token:</strong> <code className="bg-white px-1 rounded">crm-secret-token-2026</code>
+              <strong>Verify Token:</strong> <code className="bg-white px-1.5 py-0.5 rounded font-mono font-bold text-blue-700">crm-secret-token-2026</code>
             </p>
             <a href="https://developers.facebook.com/docs/whatsapp/cloud-api/guides/set-up-webhooks" target="_blank" className="text-sm text-blue-600 font-medium hover:underline">
               Read Meta Webhook Guide &rarr;
