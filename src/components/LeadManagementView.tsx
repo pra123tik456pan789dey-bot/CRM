@@ -19,7 +19,8 @@ import {
   Square,
   Users,
   Sparkles,
-  CheckCircle2
+  CheckCircle2,
+  MessageCircle
 } from "lucide-react";
 import { createLead, bulkAssignLeadsAction } from "@/app/actions/leadActions";
 import { bulkImportLeads } from "@/app/actions/csvImportActions";
@@ -329,7 +330,18 @@ export default function LeadManagementView({
                   </td>
                   <td className="p-4 text-gray-600">{lead.company_name || "Independent"}</td>
                   <td className="p-4">
-                    <div className="text-xs text-gray-900 font-mono">{lead.phone || "No phone"}</div>
+                    {lead.phone ? (
+                      <a
+                        href={`tel:${lead.phone}`}
+                        title="Click to dial on phone"
+                        className="text-xs text-indigo-600 hover:text-indigo-800 font-semibold font-mono hover:underline flex items-center gap-1"
+                      >
+                        <Phone className="w-3 h-3 text-emerald-600" />
+                        {lead.phone}
+                      </a>
+                    ) : (
+                      <div className="text-xs text-gray-400 font-mono">No phone</div>
+                    )}
                     <div className="text-xs text-gray-400">{lead.email || "No email"}</div>
                   </td>
                   <td className="p-4 whitespace-nowrap">
@@ -370,12 +382,34 @@ export default function LeadManagementView({
                     </div>
                   </td>
                   <td className="p-4 text-right">
-                    <Link
-                      href={`/leads/${lead.id}`}
-                      className="px-3 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100 transition-colors"
-                    >
-                      View Timeline
-                    </Link>
+                    <div className="flex items-center justify-end gap-1.5">
+                      {lead.phone && (
+                        <>
+                          <a
+                            href={`tel:${lead.phone}`}
+                            title="Direct Call (Opens Phone Dialer)"
+                            className="p-1.5 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-colors shadow-xs"
+                          >
+                            <Phone className="w-3.5 h-3.5" />
+                          </a>
+                          <a
+                            href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            title="Chat on WhatsApp"
+                            className="p-1.5 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 transition-colors shadow-xs"
+                          >
+                            <MessageCircle className="w-3.5 h-3.5" />
+                          </a>
+                        </>
+                      )}
+                      <Link
+                        href={`/leads/${lead.id}`}
+                        className="px-2.5 py-1.5 text-xs font-semibold bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors"
+                      >
+                        Timeline
+                      </Link>
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -16,7 +16,8 @@ import {
   FileText,
   AlertCircle,
   Play,
-  Calendar
+  Calendar,
+  PhoneCall
 } from "lucide-react";
 import { initiateClickToCall } from "@/app/actions/telephonyActions";
 import { sendWhatsAppMessage } from "@/app/actions/whatsappActions";
@@ -146,20 +147,43 @@ export default function LeadDetailView({ lead }: { lead: any }) {
         </div>
 
         {/* Action Buttons */}
-        <div className="flex gap-3">
+        <div className="flex gap-2.5 items-center flex-wrap">
+          {lead.phone && (
+            <a
+              href={`tel:${lead.phone}`}
+              className="flex items-center gap-1.5 px-3 py-2 bg-emerald-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-emerald-700 transition-colors shadow-sm"
+              title="Direct call using SIM / Mobile dialer"
+            >
+              <Phone className="w-4 h-4" /> Direct SIM Call
+            </a>
+          )}
+
           <button
             onClick={handleCall}
             disabled={isCalling}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700 transition-colors shadow-sm disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3 py-2 bg-indigo-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm disabled:opacity-50"
+            title="Cloud call with auto recording"
           >
-            <Phone className="w-4 h-4" /> {isCalling ? "Initiating Call..." : "Click-to-Call"}
+            <PhoneCall className="w-4 h-4" /> {isCalling ? "Initiating Call..." : "Cloud Call (Record)"}
           </button>
+
+          {lead.phone && (
+            <a
+              href={`https://wa.me/${lead.phone.replace(/\D/g, "")}`}
+              target="_blank"
+              rel="noreferrer"
+              className="flex items-center gap-1.5 px-3 py-2 bg-green-600 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-green-700 transition-colors shadow-sm"
+              title="Open WhatsApp chat"
+            >
+              <MessageCircle className="w-4 h-4" /> WhatsApp
+            </a>
+          )}
 
           <button
             onClick={() => setShowTaskModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-2 bg-gray-900 text-white rounded-xl text-xs sm:text-sm font-semibold hover:bg-black transition-colors shadow-sm"
           >
-            <Plus className="w-4 h-4" /> Schedule Task
+            <Plus className="w-4 h-4" /> Follow-up Task
           </button>
         </div>
       </div>
