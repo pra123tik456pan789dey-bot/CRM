@@ -18,7 +18,7 @@ import {
   useSortable
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Phone, Mail, Plus, DollarSign, Calendar, User } from "lucide-react";
+import { Phone, Mail, Plus, DollarSign, Calendar, User, Flame } from "lucide-react";
 import { updateDealStage, createDeal } from "@/app/actions/dealActions";
 
 function SortableDealCard({ deal }: { deal: any }) {
@@ -40,12 +40,20 @@ function SortableDealCard({ deal }: { deal: any }) {
       {...listeners}
       className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 cursor-grab active:cursor-grabbing mb-3 group hover:border-indigo-400 transition-all"
     >
-      <h4 className="font-semibold text-gray-900 text-sm mb-1 group-hover:text-indigo-600">
-        {deal.title}
-      </h4>
+      <div className="flex items-center justify-between gap-1 mb-1">
+        <h4 className="font-semibold text-gray-900 text-sm group-hover:text-indigo-600 truncate">
+          {deal.title}
+        </h4>
+        {deal.contact?.inquiry_count > 1 && (
+          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-xs shrink-0">
+            <Flame className="w-2.5 h-2.5 text-amber-600 fill-amber-500" />
+            {deal.contact.inquiry_count}x
+          </span>
+        )}
+      </div>
       
-      <p className="text-xs text-gray-500 mb-3 flex items-center gap-1">
-        <User className="w-3 h-3 text-gray-400" /> {deal.contact?.name || "No Contact"} ({deal.contact?.company_name || "N/A"})
+      <p className="text-xs text-gray-500 mb-3 flex items-center gap-1 truncate">
+        <User className="w-3 h-3 text-gray-400 shrink-0" /> {deal.contact?.name || "No Contact"} ({deal.contact?.company_name || "N/A"})
       </p>
 
       <div className="flex justify-between items-center pt-2 border-t border-gray-100">

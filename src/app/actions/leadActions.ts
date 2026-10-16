@@ -184,3 +184,47 @@ export async function getDashboardStats() {
     };
   }
 }
+
+export async function bulkAssignLeadsAction(leadIds: string[], targetUserId: string) {
+  try {
+    if (!leadIds || leadIds.length === 0) {
+      return { success: false, error: "No leads selected" };
+    }
+
+    const targetUser = await prisma.user.findUnique({
+      where: { id: targetUserId },
+      select: { id: true, name: true, role: true }
+    });
+
+    if (!targetUser) {
+      return { success: false, error: "Target staff user not found" };
+    }
+
+    await prisma.lead.updateMany({
+      where: { id: { in: leadIds } },
+      data: {
+        assigned_to: targetUserId,
+        updatedAt: new Date()
+      }
+    });
+
+    for (const leadId of leadIds) {
+      await prisma.activity.create({
+        data: {
+          contact_id: leadId,
+          type: "STATUS_CHANGE",
+          content: `Lead re-assigned in bulk to ${targetUser.name} (${targetUser.role}) by Administrator.`
+        }
+      });
+    }
+
+    revalidatePath("/leads");
+    return {
+      success: true,
+      message: `Successfully assigned ${leadIds.length} lead(s) to ${targetUser.name}!`
+    };
+  } catch (error: any) {
+    console.error("Error bulk assigning leads:", error);
+    return { success: false, error: error.message || "Failed to bulk assign leads" };
+  }
+}

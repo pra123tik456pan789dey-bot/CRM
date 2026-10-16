@@ -77,6 +77,7 @@ model Lead {
   custom_fields String?  // JSON string
   ai_score      Int      @default(75) // 0-100 AI Lead Score
   sentiment     String   @default("POSITIVE") // POSITIVE, NEUTRAL, NEGATIVE
+  inquiry_count Int      @default(1) // Number of times customer inquired (Deduplication counter)
   
   assigned_to   String?
   assignee      User?    @relation("LeadAssignee", fields: [assigned_to], references: [id], onDelete: SetNull)

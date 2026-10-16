@@ -65,44 +65,88 @@ export async function POST(req: Request) {
             }
           }
 
-          // Smart Round-Robin Assignment across 50 active Sales Executives
-          const salesExecs = await prisma.user.findMany({
-            where: { role: "SALESEXECUTIVE" },
-            orderBy: { createdAt: "asc" },
-          });
+          // Deduplication Check (Last 10 digits of phone)
+          const rawDigits = (fetchedLead.phone || "").replace(/\D/g, "");
+          const last10Digits = rawDigits.length >= 10 ? rawDigits.slice(-10) : "";
 
-          let assignedTo: string | null = null;
-          if (salesExecs.length > 0) {
-            // Count total leads to cycle index
-            const totalLeadsCount = await prisma.lead.count();
-            const nextIndex = totalLeadsCount % salesExecs.length;
-            assignedTo = salesExecs[nextIndex].id;
+          let existingLead = null;
+          if (last10Digits.length === 10) {
+            existingLead = await prisma.lead.findFirst({
+              where: {
+                phone: { contains: last10Digits }
+              },
+              include: { assignee: true }
+            });
           }
 
-          const lead = await prisma.lead.create({
-            data: {
-              company_id: defaultCompany?.id || null,
-              name: fetchedLead.name,
-              email: fetchedLead.email,
-              phone: fetchedLead.phone,
-              source: "FACEBOOK",
-              status: "NEW",
-              assigned_to: assignedTo,
-              facebook_page_id: facebookPageId,
-              facebook_ad_id: adId,
-              facebook_campaign_id: campaignId,
-            },
-          });
+          if (existingLead) {
+            // 🔄 STICKY ROUTING: Customer already exists! Route to original assigned executive!
+            const newCount = (existingLead.inquiry_count || 1) + 1;
+            const currentTags = existingLead.tags
+              ? existingLead.tags.split(",").map((t) => t.trim()).filter((t) => !t.startsWith("Re-inquired"))
+              : [];
+            currentTags.unshift(`Re-inquired (${newCount}x)`);
 
-          const assignedUser = salesExecs.find((u) => u.id === assignedTo);
+            const updatedLead = await prisma.lead.update({
+              where: { id: existingLead.id },
+              data: {
+                inquiry_count: newCount,
+                tags: currentTags.join(", "),
+                status: "NEW", // Bump back to NEW so agent notices priority inquiry
+                updatedAt: new Date(),
+                facebook_page_id: facebookPageId || existingLead.facebook_page_id,
+                facebook_ad_id: adId || existingLead.facebook_ad_id,
+                facebook_campaign_id: campaignId || existingLead.facebook_campaign_id,
+              }
+            });
 
-          await prisma.activity.create({
-            data: {
-              contact_id: lead.id,
-              type: "STATUS_CHANGE",
-              content: `Auto-captured from Facebook Page (ID: ${facebookPageId || "Default"}). Assigned via Round-Robin to ${assignedUser?.name || "Unassigned"}.`,
-            },
-          });
+            await prisma.activity.create({
+              data: {
+                contact_id: existingLead.id,
+                type: "STATUS_CHANGE",
+                content: `🔥 RE-INQUIRY #${newCount}: Customer submitted Meta Ad form again (Page: ${facebookPageId || "Default"}). Sticky-routed to original assigned executive: ${existingLead.assignee?.name || "Unassigned"}.`,
+              }
+            });
+          } else {
+            // 🆕 BRAND NEW LEAD: Smart Round-Robin Assignment across active Sales Executives
+            const salesExecs = await prisma.user.findMany({
+              where: { role: "SALESEXECUTIVE" },
+              orderBy: { createdAt: "asc" },
+            });
+
+            let assignedTo: string | null = null;
+            if (salesExecs.length > 0) {
+              const totalLeadsCount = await prisma.lead.count();
+              const nextIndex = totalLeadsCount % salesExecs.length;
+              assignedTo = salesExecs[nextIndex].id;
+            }
+
+            const lead = await prisma.lead.create({
+              data: {
+                company_id: defaultCompany?.id || null,
+                name: fetchedLead.name,
+                email: fetchedLead.email,
+                phone: fetchedLead.phone,
+                source: "FACEBOOK",
+                status: "NEW",
+                assigned_to: assignedTo,
+                facebook_page_id: facebookPageId,
+                facebook_ad_id: adId,
+                facebook_campaign_id: campaignId,
+                inquiry_count: 1,
+              },
+            });
+
+            const assignedUser = salesExecs.find((u) => u.id === assignedTo);
+
+            await prisma.activity.create({
+              data: {
+                contact_id: lead.id,
+                type: "STATUS_CHANGE",
+                content: `Auto-captured from Facebook Page (ID: ${facebookPageId || "Default"}). Assigned via Round-Robin to ${assignedUser?.name || "Unassigned"}.`,
+              },
+            });
+          }
         }
       }
     }

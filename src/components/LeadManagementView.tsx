@@ -12,23 +12,38 @@ import {
   User,
   Building,
   Kanban,
-  Table as TableIcon
+  Table as TableIcon,
+  Flame,
+  Clock,
+  CheckSquare,
+  Square,
+  Users,
+  Sparkles,
+  CheckCircle2
 } from "lucide-react";
-import { createLead } from "@/app/actions/leadActions";
+import { createLead, bulkAssignLeadsAction } from "@/app/actions/leadActions";
 import { bulkImportLeads } from "@/app/actions/csvImportActions";
 import KanbanDealsBoard from "./KanbanDealsBoard";
 
 export default function LeadManagementView({
   initialLeads,
-  pipelineData
+  pipelineData,
+  staffUsers = []
 }: {
   initialLeads: any[];
   pipelineData: { pipeline: any; deals: any[] };
+  staffUsers?: any[];
 }) {
-  const [viewMode, setViewMode] = useState<"board" | "table">("board");
+  const [viewMode, setViewMode] = useState<"board" | "table">("table");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
   const [sourceFilter, setSourceFilter] = useState("ALL");
+
+  // Bulk Selection & Manual Distribution State
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
+  const [targetStaffId, setTargetStaffId] = useState("");
+  const [isBulkAssigning, setIsBulkAssigning] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState<string | null>(null);
 
   // Modals
   const [showAddModal, setShowAddModal] = useState(false);
@@ -91,6 +106,45 @@ export default function LeadManagementView({
     const res = await bulkImportLeads(parsedLeads);
     if (res.success) {
       setImportResult({ created: res.createdCount || 0, duplicates: res.duplicateCount || 0 });
+    }
+  };
+
+  const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.checked) {
+      setSelectedLeadIds(filteredLeads.map((l) => l.id));
+    } else {
+      setSelectedLeadIds([]);
+    }
+  };
+
+  const handleToggleLead = (id: string) => {
+    setSelectedLeadIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const handleExecuteBulkAssign = async () => {
+    if (!targetStaffId) {
+      alert("Please select a team member / executive to assign leads.");
+      return;
+    }
+    if (selectedLeadIds.length === 0) return;
+
+    setIsBulkAssigning(true);
+    setBulkMessage(null);
+    try {
+      const res = await bulkAssignLeadsAction(selectedLeadIds, targetStaffId);
+      if (res.success) {
+        setBulkMessage(res.message || `Successfully assigned ${selectedLeadIds.length} lead(s)!`);
+        setSelectedLeadIds([]);
+        setTimeout(() => setBulkMessage(null), 4000);
+      } else {
+        alert(res.error || "Failed to assign leads");
+      }
+    } catch (err: any) {
+      alert(err.message || "Error assigning leads");
+    } finally {
+      setIsBulkAssigning(false);
     }
   };
 
@@ -217,9 +271,18 @@ export default function LeadManagementView({
           <table className="w-full text-left text-sm text-gray-600">
             <thead className="bg-gray-50 border-b border-gray-200 text-xs font-semibold text-gray-500 uppercase">
               <tr>
+                <th className="p-4 w-10">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                    checked={filteredLeads.length > 0 && selectedLeadIds.length === filteredLeads.length}
+                    onChange={handleSelectAll}
+                  />
+                </th>
                 <th className="p-4">Contact Name</th>
                 <th className="p-4">Company</th>
                 <th className="p-4">Phone & Email</th>
+                <th className="p-4">Arrival Date & Time</th>
                 <th className="p-4">Source</th>
                 <th className="p-4">Status</th>
                 <th className="p-4">Assignee</th>
@@ -228,13 +291,34 @@ export default function LeadManagementView({
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredLeads.map((lead) => (
-                <tr key={lead.id} className="hover:bg-gray-50/70 transition-colors">
+                <tr
+                  key={lead.id}
+                  className={`hover:bg-gray-50/70 transition-colors ${
+                    selectedLeadIds.includes(lead.id) ? "bg-indigo-50/40" : ""
+                  }`}
+                >
+                  <td className="p-4">
+                    <input
+                      type="checkbox"
+                      className="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500 cursor-pointer"
+                      checked={selectedLeadIds.includes(lead.id)}
+                      onChange={() => handleToggleLead(lead.id)}
+                    />
+                  </td>
                   <td className="p-4 font-medium text-gray-900">
-                    <Link href={`/leads/${lead.id}`} className="hover:text-indigo-600 font-semibold hover:underline">
-                      {lead.name}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/leads/${lead.id}`} className="hover:text-indigo-600 font-semibold hover:underline">
+                        {lead.name}
+                      </Link>
+                      {(lead.inquiry_count && lead.inquiry_count > 1) ? (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300 shadow-sm animate-pulse">
+                          <Flame className="w-3 h-3 text-amber-600 fill-amber-500" />
+                          {lead.inquiry_count}x Enquiry
+                        </span>
+                      ) : null}
+                    </div>
                     {lead.tags && (
-                      <div className="flex gap-1 mt-1">
+                      <div className="flex flex-wrap gap-1 mt-1">
                         {lead.tags.split(",").map((t: string, i: number) => (
                           <span key={i} className="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-medium">
                             {t.trim()}
@@ -247,6 +331,23 @@ export default function LeadManagementView({
                   <td className="p-4">
                     <div className="text-xs text-gray-900 font-mono">{lead.phone || "No phone"}</div>
                     <div className="text-xs text-gray-400">{lead.email || "No email"}</div>
+                  </td>
+                  <td className="p-4 whitespace-nowrap">
+                    <div className="text-xs font-semibold text-gray-800 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-gray-400" />
+                      {new Date(lead.createdAt).toLocaleDateString("en-IN", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                      })}
+                    </div>
+                    <div className="text-[11px] text-gray-500 ml-5 font-mono">
+                      {new Date(lead.createdAt).toLocaleTimeString("en-IN", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true
+                      })}
+                    </div>
                   </td>
                   <td className="p-4">
                     <span className="text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-700 rounded-md">
@@ -262,7 +363,12 @@ export default function LeadManagementView({
                       {lead.status}
                     </span>
                   </td>
-                  <td className="p-4 text-sm text-gray-700">{lead.assignee?.name || "Unassigned"}</td>
+                  <td className="p-4 text-sm text-gray-700">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block" />
+                      {lead.assignee?.name || "Unassigned"}
+                    </div>
+                  </td>
                   <td className="p-4 text-right">
                     <Link
                       href={`/leads/${lead.id}`}
@@ -426,6 +532,65 @@ export default function LeadManagementView({
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Floating Bulk Action Bar */}
+      {selectedLeadIds.length > 0 && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 bg-gray-900/95 backdrop-blur-md text-white px-5 py-3.5 rounded-2xl shadow-2xl border border-gray-700 flex flex-wrap items-center gap-4 animate-in fade-in slide-in-from-bottom-5">
+          <div className="flex items-center gap-2">
+            <span className="w-6 h-6 rounded-full bg-indigo-500 flex items-center justify-center text-xs font-bold">
+              {selectedLeadIds.length}
+            </span>
+            <span className="text-xs sm:text-sm font-semibold">Leads Selected</span>
+          </div>
+
+          <div className="h-4 w-px bg-gray-700" />
+
+          <div className="flex items-center gap-2">
+            <Users className="w-4 h-4 text-indigo-400" />
+            <select
+              value={targetStaffId}
+              onChange={(e) => setTargetStaffId(e.target.value)}
+              className="bg-gray-800 border border-gray-700 text-xs sm:text-sm text-gray-100 rounded-xl px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 cursor-pointer"
+            >
+              <option value="">Assign to Executive...</option>
+              {staffUsers.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name} ({user.role})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            onClick={handleExecuteBulkAssign}
+            disabled={isBulkAssigning || !targetStaffId}
+            className="px-4 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 disabled:opacity-50 text-white rounded-xl text-xs sm:text-sm font-bold shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+          >
+            {isBulkAssigning ? (
+              "Assigning..."
+            ) : (
+              <>
+                <Sparkles className="w-3.5 h-3.5" /> Distribute / Assign
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={() => setSelectedLeadIds([])}
+            className="text-xs text-gray-400 hover:text-white underline cursor-pointer ml-1"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {/* Toast feedback for bulk assignment */}
+      {bulkMessage && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-emerald-600 text-white px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-sm font-medium animate-in fade-in">
+          <CheckCircle2 className="w-4 h-4" />
+          {bulkMessage}
         </div>
       )}
     </div>
