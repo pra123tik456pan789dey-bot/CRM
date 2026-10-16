@@ -228,3 +228,121 @@ export async function bulkAssignLeadsAction(leadIds: string[], targetUserId: str
     return { success: false, error: error.message || "Failed to bulk assign leads" };
   }
 }
+
+export async function getEmployeeDashboardData(userId: string) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, role: true, email: true, phone: true }
+    });
+
+    const myLeads = await prisma.lead.findMany({
+      where: { assigned_to: userId },
+      orderBy: { updatedAt: "desc" },
+      include: {
+        tasks: { where: { status: "PENDING" } }
+      }
+    });
+
+    const totalAssigned = myLeads.length;
+    const wonCount = myLeads.filter((l) => l.status === "WON").length;
+    const reInquiryCount = myLeads.filter((l) => l.inquiry_count && l.inquiry_count > 1).length;
+
+    let fallbackLeads: any[] = [];
+    if (totalAssigned === 0) {
+      fallbackLeads = await prisma.lead.findMany({
+        take: 15,
+        orderBy: { createdAt: "desc" },
+        include: { assignee: true }
+      });
+    }
+
+    const myPendingTasks = await prisma.task.findMany({
+      where: {
+        OR: [
+          { assigned_to: userId },
+          { contact: { assigned_to: userId } }
+        ],
+        status: "PENDING"
+      },
+      include: { contact: true },
+      orderBy: { due_date: "asc" },
+      take: 6
+    });
+
+    const myCallsCount = await prisma.callLog.count({
+      where: {
+        OR: [
+          { agent_id: userId },
+          { contact: { assigned_to: userId } }
+        ]
+      }
+    });
+
+    return {
+      user,
+      myLeads: totalAssigned > 0 ? myLeads : fallbackLeads,
+      isFallback: totalAssigned === 0,
+      stats: {
+        totalAssigned,
+        wonCount,
+        reInquiryCount,
+        myCallsCount,
+        pendingTasksCount: myPendingTasks.length
+      },
+      myPendingTasks
+    };
+  } catch (error) {
+    console.error("Error fetching employee dashboard data:", error);
+    return null;
+  }
+}
+
+export async function getManagerDashboardData() {
+  try {
+    const totalLeads = await prisma.lead.count();
+    const unassignedCount = await prisma.lead.count({ where: { assigned_to: null } });
+    const wonCount = await prisma.lead.count({ where: { status: "WON" } });
+
+    const salesExecutives = await prisma.user.findMany({
+      where: { role: "SALESEXECUTIVE" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        phone: true,
+        _count: {
+          select: { assignedLeads: true, callLogs: true }
+        }
+      },
+      orderBy: { name: "asc" }
+    });
+
+    const unassignedLeads = await prisma.lead.findMany({
+      where: { assigned_to: null },
+      take: 10,
+      orderBy: { createdAt: "desc" }
+    });
+
+    const recentTeamLeads = await prisma.lead.findMany({
+      take: 15,
+      orderBy: { createdAt: "desc" },
+      include: { assignee: true }
+    });
+
+    return {
+      stats: {
+        totalLeads,
+        unassignedCount,
+        wonCount,
+        activeExecutivesCount: salesExecutives.length
+      },
+      salesExecutives,
+      unassignedLeads,
+      recentTeamLeads
+    };
+  } catch (error) {
+    console.error("Error fetching manager dashboard data:", error);
+    return null;
+  }
+}
