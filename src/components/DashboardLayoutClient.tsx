@@ -189,21 +189,25 @@ export default function DashboardLayoutClient({
         </nav>
 
         <div className="p-3 border-t border-gray-100 space-y-1.5 bg-gray-50/50">
-          <Link
-            href="/super-admin"
-            className="flex items-center gap-2.5 px-3 py-2 text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl font-bold text-xs transition-colors"
-          >
-            <Shield className="w-4 h-4 text-purple-600" />
-            SaaS Super Panel (Admin)
-          </Link>
+          {userRole === "SUPERADMIN" && (
+            <Link
+              href="/super-admin"
+              className="flex items-center gap-2.5 px-3 py-2 text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl font-bold text-xs transition-colors"
+            >
+              <Shield className="w-4 h-4 text-purple-600" />
+              SaaS Super Panel (Admin)
+            </Link>
+          )}
 
-          <Link
-            href="/settings"
-            className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-white rounded-xl font-semibold text-xs transition-colors"
-          >
-            <Settings className="w-4 h-4 text-gray-500" />
-            Settings
-          </Link>
+          {(userRole === "SUPERADMIN" || userRole === "MANAGER") && (
+            <Link
+              href="/settings"
+              className="flex items-center gap-2.5 px-3 py-2 text-gray-700 hover:bg-white rounded-xl font-semibold text-xs transition-colors"
+            >
+              <Settings className="w-4 h-4 text-gray-500" />
+              Settings
+            </Link>
+          )}
 
           <button
             onClick={() => signOut({ callbackUrl: "/login" })}

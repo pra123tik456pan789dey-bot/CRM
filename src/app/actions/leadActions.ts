@@ -3,9 +3,10 @@
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 
-export async function getLeads() {
+export async function getLeads(assignedUserId?: string) {
   try {
     const leads = await prisma.lead.findMany({
+      where: assignedUserId ? { assigned_to: assignedUserId } : undefined,
       orderBy: { createdAt: "desc" },
       include: {
         assignee: true,
