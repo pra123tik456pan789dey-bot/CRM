@@ -19,73 +19,103 @@ export default function FloatingAIVoiceOrb() {
 
   const recognitionRef = useRef<any>(null);
 
-  // Setup Web Speech Recognition
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      if (SpeechRecognition) {
-        const recognition = new SpeechRecognition();
-        recognition.continuous = false;
-        recognition.interimResults = true;
-        recognition.lang = "hi-IN"; // Supports Hindi & Hinglish/English
-
-        recognition.onstart = () => {
-          setIsListening(true);
-          setMicBlocked(false);
-        };
-
-        recognition.onresult = (event: any) => {
-          let currentTranscript = "";
-          for (let i = event.resultIndex; i < event.results.length; i++) {
-            currentTranscript += event.results[i][0].transcript;
-          }
-          setTranscript(currentTranscript);
-        };
-
-        recognition.onerror = (event: any) => {
-          console.warn("Speech recognition error:", event.error);
-          setIsListening(false);
-          if (event.error === "not-allowed" || event.error === "service-not-allowed") {
-            setMicBlocked(true);
-          }
-        };
-
-        recognition.onend = () => {
-          setIsListening(false);
-        };
-
-        recognitionRef.current = recognition;
-      } else {
-        setMicBlocked(true);
+  const requestMicAccess = async () => {
+    try {
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track) => track.stop());
+        setMicBlocked(false);
+        return true;
       }
+    } catch (err) {
+      console.warn("User blocked mic or error:", err);
+      setMicBlocked(true);
+      return false;
     }
-  }, []);
+    return false;
+  };
 
-  // When speech recognition ends and we have transcript, send to AI automatically
-  useEffect(() => {
-    if (!isListening && transcript && transcript.trim().length > 1) {
-      handleAskAI(transcript);
-    }
-  }, [isListening]);
-
-  const startListening = () => {
+  const startListening = async () => {
     setAiReply(null);
     setTranscript("");
     setIsOpen(true);
-    if (recognitionRef.current) {
-      try {
-        recognitionRef.current.start();
-      } catch (err) {
-        // Already started
-      }
-    } else {
+
+    if (typeof window === "undefined") return;
+
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
       setMicBlocked(true);
+      return;
+    }
+
+    // Try requesting mic permission if not yet granted
+    const allowed = await requestMicAccess();
+    if (!allowed && micBlocked) {
+      return;
+    }
+
+    try {
+      if (recognitionRef.current) {
+        try { recognitionRef.current.abort(); } catch (e) {}
+      }
+
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = "hi-IN";
+
+      let finalCapturedText = "";
+
+      recognition.onstart = () => {
+        setIsListening(true);
+        setMicBlocked(false);
+      };
+
+      recognition.onresult = (event: any) => {
+        let interim = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i];
+          if (res.isFinal) {
+            finalCapturedText += res[0].transcript + " ";
+          } else {
+            interim += res[0].transcript;
+          }
+        }
+        const combined = (finalCapturedText + interim).trim();
+        if (combined) {
+          setTranscript(combined);
+        }
+      };
+
+      recognition.onerror = (event: any) => {
+        console.warn("Speech recognition error:", event.error);
+        setIsListening(false);
+        if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+          setMicBlocked(true);
+        }
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+        const textToAsk = finalCapturedText.trim() || transcript.trim();
+        if (textToAsk.length > 1) {
+          handleAskAI(textToAsk);
+        }
+      };
+
+      recognitionRef.current = recognition;
+      recognition.start();
+    } catch (err) {
+      console.error("Speech recognition start failed:", err);
+      setIsListening(false);
     }
   };
 
   const stopListening = () => {
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
+      try {
+        recognitionRef.current.stop();
+      } catch (e) {}
     }
     setIsListening(false);
   };
@@ -230,8 +260,26 @@ export default function FloatingAIVoiceOrb() {
           {/* Conversation Area */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-[160px] max-h-[340px]">
             {micBlocked && (
-              <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-xl text-xs text-amber-800 dark:text-amber-300">
-                ⚠️ <strong>Microphone Notice:</strong> Please allow mic permissions in your browser address bar to use voice, or type your question below!
+              <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-2xl text-xs text-amber-900 dark:text-amber-200 space-y-2">
+                <div className="flex items-start gap-2">
+                  <span className="text-base">🎙️</span>
+                  <div>
+                    <strong className="block font-bold">माइक बंद है (Microphone Blocked):</strong>
+                    <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-0.5 leading-relaxed">
+                      ब्राउज़र में ऊपर URL के बगल में बने <strong>🔒 Lock (या माइक)</strong> आइकॉन पर क्लिक करके Microphone को <strong>'Allow' (चालू)</strong> करें।
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const ok = await requestMicAccess();
+                    if (ok) startListening();
+                  }}
+                  className="w-full py-1.5 bg-amber-600 hover:bg-amber-700 text-white rounded-xl font-bold text-xs shadow-xs transition-colors"
+                >
+                  🔓 माइक अनुमति दें (Allow Mic)
+                </button>
               </div>
             )}
 
