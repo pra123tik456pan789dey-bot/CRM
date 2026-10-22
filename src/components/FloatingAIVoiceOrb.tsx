@@ -106,8 +106,8 @@ export default function FloatingAIVoiceOrb() {
       const reply = data.reply || "Done";
       setAiReply(reply);
 
-      // Voice synthesis (Speech aloud)
-      speakAloud(reply);
+      // Voice synthesis (Speech aloud - speaks concise summary so it sounds natural)
+      speakAloud(data.spokenText || reply);
 
       // If navigation requested
       if (data.navigateTo && data.navigateTo !== pathname) {
@@ -126,9 +126,11 @@ export default function FloatingAIVoiceOrb() {
   const speakAloud = (text: string) => {
     if (typeof window !== "undefined" && "speechSynthesis" in window) {
       window.speechSynthesis.cancel();
-      const utterance = new SpeechSynthesisUtterance(text);
+      // Remove markdown formatting from spoken text
+      const cleanSpoken = text.replace(/[*_#`]/g, "");
+      const utterance = new SpeechSynthesisUtterance(cleanSpoken);
       utterance.lang = "hi-IN";
-      utterance.rate = 1.05;
+      utterance.rate = 1.02;
       utterance.pitch = 1.0;
       utterance.onstart = () => setIsSpeaking(true);
       utterance.onend = () => setIsSpeaking(false);
@@ -146,10 +148,12 @@ export default function FloatingAIVoiceOrb() {
   };
 
   const quickPrompts = [
-    { label: "📊 Today's Revenue", q: "Aaj ka kitna revenue aur payment pending hai?" },
-    { label: "👥 Recent Leads", q: "Mujhe latest leads aur unka status batao" },
-    { label: "📁 Open Pipeline", q: "Open sales pipeline and deals" },
-    { label: "💼 Pending Invoices", q: "Kitne pending invoices hain?" }
+    { label: "🚀 CRM कैसे काम करता है?", q: "Ye CRM kaise kaam karta hai aur kaise chalaya jata hai?" },
+    { label: "🔌 API कैसे कनेक्ट करें?", q: "CRM me API kaise connect karna hai?" },
+    { label: "📞 कॉलिंग कैसे करें?", q: "Employees call kaise lagayenge aur number kaise link hoga?" },
+    { label: "👤 मैनेजर व टीम कौन है?", q: "Manager ka naam kya hai aur team me kaun kaun hai?" },
+    { label: "💰 पेंडिंग पेमेंट्स?", q: "Aaj ka kitna revenue aur payment pending hai?" },
+    { label: "📱 ऐप कैसे डाउनलोड करें?", q: "Mobile me app kaise download karein?" }
   ];
 
   return (
